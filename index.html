@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RUMI 3D — words on a spinning solid</title>
+<style>
+  :root{--bg:#0b0e1a;--panel:#141a2e;--panel2:#1b2340;--ink:#eef1fb;--muted:#8b97bd;--line:#27314f;
+    --spine:#7c5cff;--cyan:#4cc9f0;--good:#3ddc97;--bad:#ff5d73;--gold:#ffd166;}
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%}
+  body{background:radial-gradient(1100px 700px at 80% -15%,rgba(124,92,255,.12),transparent),
+    radial-gradient(900px 700px at -10% 110%,rgba(76,201,240,.08),transparent),var(--bg);
+    color:var(--ink);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+    display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
+  header{display:flex;align-items:center;gap:16px;padding:13px 22px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(124,92,255,.07),transparent);flex-wrap:wrap}
+  .brand{display:flex;flex-direction:column;line-height:1}
+  .brand b{font-size:23px;letter-spacing:4px;font-weight:800;background:linear-gradient(90deg,#fff,#b3a4ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand small{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:3px}
+  .pill{font-size:11px;color:#cdbcff;border:1px solid var(--spine);border-radius:20px;padding:4px 12px;letter-spacing:1px;white-space:nowrap}
+  .stats{display:flex;gap:9px;margin-left:auto}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:7px 13px;text-align:center;min-width:70px}
+  .stat b{display:block;font-size:17px}.stat span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px}
+  main{display:flex;gap:20px;padding:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center;flex:1}
+  .left{display:flex;flex-direction:column;gap:12px;flex:1;min-width:340px;max-width:680px}
+  .cluebar{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 15px;min-height:54px;display:flex;align-items:center;gap:10px}
+  .cluebar .num{width:26px;height:26px;border-radius:7px;background:var(--spine);color:#0c0a1f;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .cluebar .txt{font-size:16px}
+  .scenewrap{position:relative;background:radial-gradient(620px 460px at 50% 42%,rgba(124,92,255,.10),transparent),#070a14;
+    border:1px solid var(--line);border-radius:16px;height:560px;box-shadow:0 24px 60px rgba(0,0,0,.4);overflow:hidden}
+  #scene{display:block;cursor:grab}
+  #scene:active{cursor:grabbing}
+  .hintrot{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted);pointer-events:none;letter-spacing:.5px}
+  .spinner{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(11,14,26,.75);z-index:5}
+  .spinner.show{display:flex}
+  .spinner .ring{width:46px;height:46px;border:3px solid var(--line);border-top-color:var(--spine);border-radius:50%;animation:spin 1s linear infinite}
+  .spinner span{font-size:12px;color:var(--muted);letter-spacing:1px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .progress{height:7px;background:#0c1122;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .progress>div{height:100%;width:0;transition:width .3s;background:linear-gradient(90deg,var(--cyan),var(--spine))}
+  .side{width:320px;max-width:92vw;display:flex;flex-direction:column;gap:14px}
+  .panelbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px}
+  .panelbox h4{margin:0 0 9px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+  .ctrls{display:flex;flex-direction:column;gap:9px}
+  select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer}
+  .btns{display:flex;flex-wrap:wrap;gap:7px}
+  button.btn{flex:1;min-width:70px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;transition:.12s}
+  button.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  button.btn.spineb:hover{border-color:var(--spine);color:#cdbcff}
+  button.btn.primary{background:linear-gradient(135deg,var(--spine),#4361ee);color:#fff;border:none}
+  button.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+  #clueList{list-style:none;margin:0;padding:0;max-height:340px;overflow:auto}
+  #clueList li{font-size:13px;padding:7px 8px;border-radius:7px;cursor:pointer;display:flex;gap:9px;line-height:1.3}
+  #clueList li b{color:var(--spine);min-width:20px}
+  #clueList li i{color:var(--muted);font-style:normal}
+  #clueList li:hover{background:var(--panel2)}
+  #clueList li.sel{background:#2a2350;box-shadow:inset 0 0 0 1px var(--spine)}
+  #clueList li.done{color:var(--muted);text-decoration:line-through}
+  .overlay{position:fixed;inset:0;background:rgba(6,8,18,.85);display:none;align-items:center;justify-content:center;z-index:50}
+  .overlay.show{display:flex}
+  .card{background:linear-gradient(160deg,#1c1840,#141a2e);border:1px solid var(--spine);border-radius:20px;padding:30px 40px;text-align:center;max-width:430px;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+  .card h2{margin:0 0 4px;font-size:26px}.card .s2{color:var(--muted);font-size:13px;margin:4px 0}
+  .card .big{font-size:44px;color:var(--gold);font-weight:800;margin:8px 0}
+  .card .row{display:flex;gap:12px;justify-content:center}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;display:none}
+  footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 20px 18px}
+  @media(max-width:760px){.scenewrap{height:440px}}
+
+  #clueList li.divider{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 4px 4px;cursor:default;background:none}
+  #clueList li.divider:hover{background:none}
+  #clueList li.locked{opacity:.38}
+  #stageLine{font-size:11px;letter-spacing:1px;color:var(--muted);font-weight:600}
+  .card .poem{font-style:italic;line-height:1.65;color:#e2e6ff;font-size:14px;margin:14px 2px;text-align:left;white-space:normal}
+
+  .zoomctl{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:4}
+  .zoomctl button{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:rgba(20,26,46,.8);color:var(--ink);font-size:18px;font-weight:700;cursor:pointer;line-height:1}
+  .zoomctl button:hover{border-color:var(--cyan);color:var(--cyan)}
+
+  .card .reveal{font-size:30px;font-weight:800;letter-spacing:6px;color:var(--gold);margin:6px 0}
+  .card .kind{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b>RUMI&nbsp;3D</b><small>words on a spinning solid</small></div>
+  <div class="pill" id="sizePill">—</div>
+  <div class="stats">
+    <div class="stat"><b id="solvedCount">0/0</b><span>Words</span></div>
+    <div class="stat"><b id="timer">0:00</b><span>Time</span></div>
+  </div>
+</header>
+<main>
+  <div class="left">
+    <div class="cluebar"><div class="num" id="curNum">1</div><div class="txt" id="curClue">Loading…</div></div>
+    <div class="scenewrap">
+      <canvas id="scene"></canvas>
+      <div class="hintrot">drag to rotate · scroll to zoom · click + type · Tab = next word · Space = face it</div>
+      <div class="zoomctl"><button id="btnZoomIn" title="Zoom in (+)">+</button><button id="btnZoomOut" title="Zoom out (−)">−</button></div>
+      <div class="spinner" id="spinner"><div class="ring"></div><span>Folding the solid…</span></div>
+    </div>
+    <div class="progress"><div id="progFill"></div></div>
+  </div>
+  <div class="side">
+    <div class="panelbox ctrls">
+      <h4><span>Solid</span></h4>
+      <select id="sizeSel"></select>
+      <div class="btns">
+        <button class="btn" id="btnCheck">Check</button>
+        <button class="btn" id="btnHint">Hint word</button>
+        <button class="btn spineb" id="btnCorner">Reveal corner</button>
+        <button class="btn danger" id="btnReveal">Reveal</button>
+        <button class="btn primary" id="btnNew">New</button>
+        <button class="btn spineb" id="btnIntent">✦ Intent</button>
+      </div>
+    </div>
+    <div class="panelbox">
+      <h4><span>Words</span><span id="stageLine"></span></h4>
+      <ul id="clueList"></ul>
+    </div>
+  </div>
+</main>
+<footer>Every edge of the solid is a word; every glowing corner is a single letter shared by all the words that meet there. Solve one word and its corners hand letters to its neighbors — across the surface of a 3D shape you can spin.</footer>
+<div class="overlay" id="introOverlay"><div class="card introcard">
+  <div class="introk">before the solid forms</div>
+  <h2>What are you bringing to the center?</h2>
+  <div class="moods" id="moodBtns"></div>
+  <div class="introline" id="introLine"></div>
+</div></div>
+<div class="overlay" id="overlay"><div class="card" id="card"></div></div>
+<canvas id="confetti"></canvas>
+<script>
+/* ============ 3D RUMI: generator core + play model ============ */
+const RAW = [
+ ["PLANET","World orbiting a star"],["COMET","Tailed ice ball"],["ORBIT","Path around a star"],
+ ["METEOR","Shooting star"],["SOLAR","Of the sun"],["LUNAR","Of the moon"],["CRATER","Impact scar"],
+ ["RIVER","Flowing water"],["ISLAND","Sea-ringed land"],["VALLEY","Low between hills"],["DESERT","Arid land"],
+ ["FOREST","Dense woods"],["CANYON","Deep gorge"],["HARBOR","Sheltered port"],["MARKET","Shopping place"],
+ ["WINDOW","Glass opening"],["GARDEN","Plant plot"],["LADDER","Rungs to climb"],["CANDLE","Wax light"],
+ ["MIRROR","It reflects"],["BRIDGE","River span"],["TUNNEL","Underground way"],["LETTER","Mailed note"],
+ ["TICKET","Entry pass"],["BASKET","Woven holder"],["ANCHOR","Ship holder"],["GUITAR","Six strings"],
+ ["PIANO","88 keys"],["VIOLIN","Bowed string"],["MELODY","The tune"],["RHYTHM","The beat"],["SINGER","Vocalist"],
+ ["TIGER","Striped cat"],["EAGLE","Soaring raptor"],["OTTER","River mammal"],["RAVEN","Black bird"],
+ ["HORSE","Galloping animal"],["WHALE","Ocean giant"],["SNAKE","Slithering reptile"],["MOUSE","Tiny rodent"],
+ ["ZEBRA","Striped equine"],["LLAMA","Andean animal"],["KOALA","Eucalyptus eater"],["PANDA","Bamboo bear"],
+ ["BREAD","Bakery staple"],["HONEY","Bee product"],["LEMON","Sour citrus"],["OLIVE","Martini garnish"],
+ ["PEPPER","Spicy seasoning"],["BUTTER","Bread spread"],["COFFEE","Morning brew"],["SUGAR","Sweetener"],
+ ["LAPTOP","Portable PC"],["PIXEL","Screen dot"],["CABLE","Wire"],["SCREEN","Display"],["BUTTON","Press it"],
+ ["SIGNAL","Transmission"],["ROBOT","Mechanical helper"],["PENCIL","Writing tool"],["ERASER","Mark remover"],
+ ["RULER","Measuring stick"],["PAPER","Write on it"],["CLOCK","Time teller"],["WATCH","Wrist timer"],
+ ["ALARM","Wake sound"],["OCEAN","Vast saltwater"],["BEACH","Sandy shore"],["STORM","Wild weather"],
+ ["CLOUD","Sky puff"],["FLOWER","Bloom"],["GRASS","Lawn cover"],["STONE","Small rock"],["TRAIN","Rail ride"],
+ ["PLANE","Sky traveler"],["TRUCK","Big hauler"],["WAGON","Pulled cart"],["HOUSE","Dwelling"],["CABIN","Rustic hut"],
+ ["TOWER","Tall structure"],["CASTLE","Royal fort"],["SWORD","Blade"],["SHIELD","Defense gear"],["ARROW","Bow shot"],
+ ["ARMOR","Body guard"],["DREAM","Sleep vision"],["GHOST","Spirit"],["MAGIC","Wizardry"],["RIDDLE","Brain teaser"],
+ ["NORTH","Compass point"],["SOUTH","Below north"],["GREEN","Grass hue"],["BROWN","Earth tone"],["BLACK","Darkest"],
+ ["WHITE","Snow shade"],["SMILE","Happy look"],["LAUGH","Joyful sound"],["HEART","Love symbol"],["TEARS","Crying drops"],
+ ["APPLE","Orchard fruit"],["GRAPE","Vine fruit"],["MANGO","Tropical fruit"],["PEACH","Fuzzy fruit"],["BERRY","Small fruit"],
+ ["ONION","Layered bulb"],["BEANS","Chili legumes"],["RADISH","Peppery root"],["CELERY","Crunchy stalk"],
+ ["SALAD","Greens bowl"],["STEAK","Grilled cut"],["TOAST","Browned bread"],["DONUT","Ringed treat"],
+ ["ENGINE","Power plant"],["MOTOR","It spins"],["WHEEL","It rolls"],["BRAKE","It stops you"],["PEDAL","Foot lever"],
+ ["RADIO","Airwave box"],["PHONE","Caller"],["EMAIL","Digital mail"],["MODEM","Net box"],["ROUTER","Wifi hub"],
+ ["RIVERS","Many streams"],["STARES","Long looks"],["STONES","Many rocks"],
+ ["SCALES","Fish coat"],["SLOPES","Hillsides"],["SPACES","Gaps"],["SHORES","Coastlines"],["SPICES","Flavorings"],
+ ["TABLES","Furniture"],["TIGERS","Big cats"],["TRADES","Swaps"],["TRAILS","Paths"],["TREATS","Goodies"],
+ ["NURSE","Care giver"],["NOOSE","Loop knot"],["NIECE","Sib's daughter"],["NORSE","Viking-ish"],
+ ["EAGLES","Philly NFL"],["EAVES","Roof edges"],["ECHOES","Repeats"],["EDGES","Borders"],["ELVES","Santa helpers"],
+ ["ROSE","Thorny bloom"],["RISE","Go up"],["ROPE","Thick cord"],["RACE","Speed contest"],["RIDE","Trip"],
+ ["RARE","Uncommon"],["RULE","Regulation"],["RAGE","Fury"],["ROBE","Bath wear"],["RINSE","Wash off"],
+ ["SAGE","Wise one"],["SALE","Bargain"],["SANE","Of sound mind"],["SLIDE","Park ride"],["SPINE","Backbone"],
+ ["TONE","Pitch"],["TIDE","Sea rise"],["TALE","Story"],["TIME","Clock measure"],["TRIBE","Clan"],["THEME","Motif"],
+ ["ANTE","Poker stake"],["ALOE","Soothing plant"],["ABODE","Home"],["ARENA","Stadium"],["AROSE","Got up"],
+ ["DUNE","Sand hill"],["DOSE","Med amount"],["DICE","Game cubes"],["DANCE","Move to music"],["DRONE","Flying cam"],
+ ["LIME","Green citrus"],["LANE","Road strip"],["LACE","Shoe string"],["LODGE","Cabin inn"],["LOOSE","Not tight"],
+ ["ONCE","One time"],["OOZE","Slow seep"],["OXIDE","Rust"],["OZONE","Sky layer"],
+  ["AZURE","Sky blue"], ["BRAVE","Courageous"], ["CRANE","Tall wading bird"], ["DRAPE","Hang loosely"], ["FLAKE","Snow bit"], ["GRACE","Elegance"], ["JUDGE","Court official"], ["MAPLE","Syrup tree"], ["PLACE","Location"], ["QUOTE","Cited words"], ["RAISE","Lift up"], ["SHADE","Bit of shadow"], ["THRONE","Royal seat"], ["VOICE","Vocal sound"], ["CLOSE","Shut"], ["DODGE","Evade"], ["FENCE","Yard barrier"], ["GLOBE","Earth model"], ["HINGE","Door pivot"], ["JUICE","Fruit drink"], ["LARGE","Big"], ["MERGE","Combine"], ["NICHE","Small recess"], ["PASTE","Sticky mix"], ["RANGE","Mountain span"], ["SCENE","Film segment"], ["TWINE","Garden string"], ["VERSE","Poem part"], ["WEDGE","Triangular block"], ["CHIME","Bell sound"], ["ELOPE","Run off to marry"], ["LANCE","Knight's spear"], ["PRUNE","Trim a plant"], ["STORE","Shop"], ["STOVE","Cooktop"], ["SUITE","Hotel rooms"], ["TRACE","Faint mark"], ["WASTE","Squander"], ["SPACE","Outer void"], ["BADGE","Pinned emblem"], ["CURVE","Bend"], ["EAGLE","Soaring raptor"], ["FUDGE","Soft candy"], ["GRIME","Dirt"], ["HOUSE","Dwelling"], ["ATLAS","Map book"], ["BRASS","Yellow alloy"], ["CHESS","Board game"], ["GLASS","Window pane"], ["PRESS","Push down"], ["CROSS","X shape"], ["FOCUS","Sharpness"], ["BONUS","Extra reward"], ["CREST","Ridge top"], ["QUEST","Heroic journey"], ["FEAST","Big meal"], ["TRUST","Reliance"], ["CHART","Graph"], ["GIANT","Huge being"], ["PILOT","Plane flyer"], ["FLOAT","Stay atop water"], ["SPLIT","Divide"], ["MELON","Round fruit"], ["BACON","Breakfast strip"], ["CROWN","Royal headwear"], ["BRAIN","Thinking organ"], ["CHAIN","Linked metal"], ["LINEN","Bed fabric"], ["RESIN","Tree sap"], ["SATIN","Smooth fabric"], ["ALTAR","Worship table"], ["CEDAR","Aromatic wood"], ["DINER","Casual eatery"], ["FEVER","High temperature"], ["LEVER","Pry bar"], ["MAYOR","Town leader"], ["RUMOR","Gossip"], ["TENOR","High male voice"], ["VAPOR","Mist"], ["VIGOR","Energy"], ["FIELD","Open land"], ["GUARD","Protector"], ["HOUND","Hunting dog"], ["LEGEND","Myth"], ["POUND","Weight unit"], ["ROUND","Circular"], ["SHARD","Glass piece"], ["SOUND","Noise"], ["TREND","Fashion wave"], ["WORLD","The earth"], ["BOARD","Wooden plank"], ["FROND","Fern leaf"], ["GLAND","Body organ"], ["SCOUT","One who explores"], ["SHORE","Coastline"], ["SMOKE","Fire's haze"], ["SNORE","Sleep sound"], ["SPARE","Extra"], ["SPICE","Flavoring"], ["STARE","Long look"], ["STONE","Small rock"], ["STORE","Shop"], ["SWORE","Took an oath"], ["VOTER","Ballot caster"], ["WAVER","Hesitate"],
+  ["PETAL","Flower part"], ["THORN","Rose's defense"], ["BLOOM","Open flower"], ["MEADOW","Grassy field"], ["WILLOW","Drooping tree"], ["BIRCH","White-barked tree"], ["CLOVER","Lucky leaf"], ["TULIP","Spring bulb flower"], ["DAISY","White-petaled bloom"], ["NECTAR","Flower's sweet"], ["POLLEN","Bee dust"], ["BRANCH","Tree limb"], ["ACORN","Oak's seed"], ["PEBBLE","Tiny stone"], ["BOULDER","Huge rock"], ["GROVE","Small wood"], ["MARSH","Wetland"], ["RIDGE","Hill's crest"], ["CLIFF","Steep rock face"], ["CAVERN","Big cave"], ["WAVE","Rolling swell"], ["FOAM","Sea froth"], ["REEF","Coral ridge"], ["CORAL","Reef builder"], ["PEARL","Oyster gem"], ["SHELL","Beach find"], ["SURF","Breaking waves"], ["LAGOON","Sheltered pool"], ["COVE","Small bay"], ["CREEK","Little stream"], ["BROOK","Babbling water"], ["BASIN","Water bowl"], ["MARINA","Boat dock"], ["VESSEL","Ship"], ["MAST","Sail pole"], ["AURORA","Polar lights"], ["GALAXY","Star system"], ["NEBULA","Space cloud"], ["COSMOS","The universe"], ["ZENITH","Highest point"], ["HORIZON","Where sky meets land"], ["TWILIGHT","Dusk light"], ["MIDNIGHT","12 AM"], ["CRESCENT","Moon sliver"], ["GRAVITY","Pulls you down"], ["BREEZE","Gentle wind"], ["GUST","Sudden wind"], ["MIST","Fine fog"], ["HAZE","Light fog"], ["SLEET","Icy rain"], ["THUNDER","Storm's boom"], ["DRIZZLE","Light rain"], ["RAINBOW","Arc of color"], ["CINDER","Burnt bit"], ["TORCH","Handheld flame"], ["HEARTH","Fireplace floor"], ["SCORCH","Burn the surface"], ["FLICKER","Waver, as flame"], ["MANTEL","Shelf over a fire"], ["PORCH","Front step roof"], ["ATTIC","Top room"], ["CELLAR","Underground room"], ["PANTRY","Food closet"], ["RAFTER","Roof beam"], ["CHIMNEY","Smoke stack"], ["QUILT","Patchwork cover"], ["LONGING","Deep want"], ["SOLACE","Comfort"], ["GRIEF","Deep sorrow"], ["MIRTH","Merriment"], ["COURAGE","Bravery"], ["MERCY","Compassion shown"], ["SILENCE","No sound"], ["MEMORY","A kept moment"], ["REGRET","Wishing undone"], ["FAITH","Belief"], ["DOUBT","Uncertainty"], ["WONDER","Awe"], ["EMBERS","Dying coals"], ["TENDER","Gentle"], ["EPOCH","Long era"], ["DECADE","Ten years"], ["SEASON","Spring or fall"], ["MOMENT","Brief instant"], ["AUTUMN","Fall season"], ["WINTER","Cold season"], ["SPRING","Bouncy season"], ["SUMMER","Warm season"], ["SOLSTICE","Longest day"], ["EQUINOX","Equal day and night"], ["LANTERN","Carried light"], ["COMPASS","Points north"], ["TRINKET","Small charm"], ["RELIC","Old treasure"], ["THREAD","Sewing strand"], ["NEEDLE","Sewing point"], ["FABRIC","Cloth"], ["VELVET","Soft fabric"], ["COTTON","Soft fiber"], ["LEATHER","Hide material"], ["MARBLE","Veined stone"], ["GRANITE","Hard rock"], ["COPPER","Reddish metal"], ["SILVER","Shiny metal"], ["BRONZE","Third-place metal"], ["CRYSTAL","Clear gem"], ["FEATHER","Bird's plume"], ["RIBBON","Tied strip"], ["MEADOW","Open grassland"], ["TIMBER","Cut wood"], ["MAPLE","Syrup tree"], ["CEDAR","Fragrant wood"], ["ORCHID","Exotic flower"], ["JASMINE","Fragrant bloom"], ["LANTERN","Glowing lamp"], ["CANOE","Paddled boat"], ["PADDLE","Canoe tool"], ["RIPPLE","Small wave"], ["CURRENT","Water's flow"], ["DEPTH","How deep"], ["SUMMIT","Mountain top"], ["VALLEY","Low between hills"], ["CANYON","Deep gorge"], ["PLATEAU","Flat highland"], ["TUNDRA","Frozen plain"],
+];
+const _seen=new Set();const BANK=[];
+for(const [w,c] of RAW){const W=w.toUpperCase();if(!/^[A-Z]+$/.test(W)||W.length<3)continue;if(_seen.has(W))continue;_seen.add(W);BANK.push({word:W,clue:c});}
+
+function makeSolid(name){
+  let V;
+  if(name==="tetra")V=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]];
+  else if(name==="hexa"){ // triangular bipyramid — 6 faces, 9 edges
+    const R=1/Math.sqrt(3),h=Math.sqrt(2/3);
+    V=[[R,0,0],[R*Math.cos(2.0943951),R*Math.sin(2.0943951),0],[R*Math.cos(4.1887902),R*Math.sin(4.1887902),0],[0,0,h],[0,0,-h]];
+  }
+  else if(name==="octa")V=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+  else if(name==="deca"){ // pentagonal bipyramid — 10 faces, 15 edges
+    const R=1/(2*Math.sin(Math.PI/5)),h=Math.sqrt(1-R*R);V=[];
+    for(let k=0;k<5;k++){const a=k*2*Math.PI/5;V.push([R*Math.cos(a),R*Math.sin(a),0]);}
+    V.push([0,0,h]);V.push([0,0,-h]);
+  }
+  else{const p=(1+Math.sqrt(5))/2;V=[[-1,p,0],[1,p,0],[-1,-p,0],[1,-p,0],[0,-1,p],[0,1,p],[0,-1,-p],[0,1,-p],[p,0,-1],[p,0,1],[-p,0,-1],[-p,0,1]];}
+  const d2=(a,b)=>{let s=0;for(let i=0;i<3;i++)s+=(a[i]-b[i])**2;return s;};
+  let min=Infinity;for(let i=0;i<V.length;i++)for(let j=i+1;j<V.length;j++)min=Math.min(min,d2(V[i],V[j]));
+  const E=[];for(let i=0;i<V.length;i++)for(let j=i+1;j<V.length;j++)if(Math.abs(d2(V[i],V[j])-min)<1e-4*min)E.push([i,j]);
+  const eset=new Set(E.map(([a,b])=>a+"_"+b));const has=(a,b)=>eset.has(Math.min(a,b)+"_"+Math.max(a,b));
+  // a candidate triangle is a real face only if it lies on the convex hull (all other verts on one side)
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const hull=(i,j,k)=>{const n=cross(sub(V[j],V[i]),sub(V[k],V[i]));let pos=false,neg=false;
+    for(let q=0;q<V.length;q++){if(q===i||q===j||q===k)continue;const d=dot(n,sub(V[q],V[i]));if(d>1e-6)pos=true;if(d<-1e-6)neg=true;}return !(pos&&neg);};
+  const F=[];for(let i=0;i<V.length;i++)for(let j=i+1;j<V.length;j++)for(let k=j+1;k<V.length;k++)if(has(i,j)&&has(j,k)&&has(i,k)&&hull(i,j,k))F.push([i,j,k]);
+  // uniform scale (preserve shape for non-spherical solids like bipyramids)
+  const mx=Math.max(...V.map(p=>Math.hypot(p[0],p[1],p[2])))||1;
+  V=V.map(p=>[p[0]/mx*1.4,p[1]/mx*1.4,p[2]/mx*1.4]);
+  return {V,E,F,name};
+}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function bfsEdgeOrder(nV,E){const adj=Array.from({length:nV},()=>[]);E.forEach(([a,b],i)=>{adj[a].push([b,i]);adj[b].push([a,i]);});
+  const sE=new Set(),order=[],sV=new Set([0]),q=[0];
+  while(q.length){const v=q.shift();for(const[w,ei]of adj[v]){if(!sE.has(ei)){sE.add(ei);order.push(ei);}if(!sV.has(w)){sV.add(w);q.push(w);}}}
+  E.forEach((_,i)=>{if(!sE.has(i))order.push(i);});return order;}
+function solveSolid(solid,restarts,nodeBudget){
+  const {V,E}=solid;
+  for(let r=0;r<restarts;r++){
+    const vL=Array(V.length).fill(null),eW=Array(E.length).fill(null),used=new Set();
+    const order=bfsEdgeOrder(V.length,E);let nodes=0,bail=false;
+    const ok=(function assign(k){
+      if(bail)return false; if(++nodes>nodeBudget){bail=true;return false;}
+      if(k===order.length)return true;
+      const ei=order[k],[u,v]=E[ei];let cand=[];
+      for(const e of BANK){if(used.has(e.word))continue;const f=e.word[0],l=e.word[e.word.length-1];
+        // orientation 1: word starts at u, ends at v
+        if((vL[u]===null||vL[u]===f)&&(vL[v]===null||vL[v]===l))cand.push([e,u,v,f,l]);
+        // orientation 2: word starts at v, ends at u
+        if(f!==l&&(vL[v]===null||vL[v]===f)&&(vL[u]===null||vL[u]===l))cand.push([e,v,u,f,l]);}
+      cand=shuffle(cand);
+      for(const[e,start,end,f,l]of cand.slice(0,28)){
+        const ss=vL[start],se=vL[end];vL[start]=f;vL[end]=l;used.add(e.word);
+        eW[ei]={word:e.word,clue:e.clue,from:start,to:end,fromL:f,toL:l};
+        if(assign(k+1))return true;
+        vL[start]=ss;vL[end]=se;used.delete(e.word);eW[ei]=null;
+      }
+      return false;
+    })(0);
+    if(ok)return {vertexLetter:vL,edgeWords:eW};
+  }
+  return null;
+}
+
+/* ---- build the play model ---- */
+function buildPuzzle(name){
+  const solid=makeSolid(name);
+  const budget=name==="icosa"?9000:name==="deca"?12000:name==="octa"?20000:name==="hexa"?8000:4000;
+  const restarts=name==="icosa"?3000:name==="deca"?1800:name==="hexa"?500:300;
+  let sol=null;for(let t=0;t<2&&!sol;t++)sol=solveSolid(solid,restarts,budget);
+  if(!sol)return null;
+  const vertices=solid.V.map((p,i)=>({i,p,sol:sol.vertexLetter[i],cur:""}));
+  const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+  const edges=solid.E.map((ed,ei)=>{
+    const w=sol.edgeWords[ei];const L=w.word.length;const a=w.from,b=w.to;
+    const A=solid.V[a],B=solid.V[b];const cells=[];
+    for(let k=0;k<L;k++){const t=k/(L-1);const p3=lerp(A,B,t);
+      if(k===0)cells.push({kind:'v',v:a,t,p3,letter:w.word[k]});
+      else if(k===L-1)cells.push({kind:'v',v:b,t,p3,letter:w.word[k]});
+      else cells.push({kind:'i',key:'E'+ei+'_'+k,t,p3,letter:w.word[k]});
+    }
+    return {ei,word:w.word,clue:w.clue,from:a,to:b,len:L,cells,num:ei+1,layer:'edge'};
+  });
+  return {solid,vertices,edges,_cur:{},coreCur:"",name};
+}
+function getCur(p,c){if(c.kind==='v')return p.vertices[c.v].cur;if(c.kind==='core')return p.coreCur||"";return p._cur[c.key]||"";}
+function setCur(p,c,ch){if(c.kind==='v')p.vertices[c.v].cur=ch;else if(c.kind==='core')p.coreCur=ch;else p._cur[c.key]=ch;}
+function wordDone(p,w){return w.cells.every(c=>getCur(p,c)===c.letter);}
+function solved(p){for(const w of allWords(p))for(const c of w.cells)if(getCur(p,c)!==c.letter)return false;return true;}
+
+function allWords(p){return [...p.edges,...(p.faceWords||[]),...(p.spokeWords||[])];}
+function _shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function _coreLetter(){const cnt={};for(const e of BANK){const l=e.word[e.word.length-1];cnt[l]=(cnt[l]||0)+1;}let best='E',bc=0;for(const k in cnt)if(cnt[k]>bc){bc=cnt[k];best=k;}return best;}
+
+const PAYOFFS=[
+ {word:"DREAM",kind:"a poem",near:["GHOST","MAGIC","RIDDLE","CLOUD","DREAM"],
+  text:"All night you build rooms no one enters,\nand furnish them with faces you almost recall.\nBy dawn the doors are gone -\nbut some strange light keeps finding\nthe window you can never quite locate."},
+ {word:"HOME",kind:"a poem",near:["HOUSE","CABIN","GARDEN","WINDOW","CANDLE","HEART"],
+  text:"It was never the walls.\nIt was the sound the door made only for you,\nthe chair that kept your shape.\nYou can wander your whole life\nten minutes from the one place that knew your name."},
+ {word:"OCEAN",kind:"a poem",near:["OCEAN","TIDE","SHORE","WHALE","BEACH","ISLAND","HARBOR","STORM"],
+  text:"Everything you've lost is in here,\nturned to salt and patience.\nThe tide does not take - it returns,\nonly slower than a life,\nand never quite the thing you gave it."},
+ {word:"TIME",kind:"a poem",near:["CLOCK","WATCH","TIMER","ALARM","RIVER"],
+  text:"It was never a river; rivers fall again as rain.\nThis goes one way, and it goes through you,\nquiet as a key in a lock you didn't know you were.\nOnly what you do now is beyond its reach."},
+ {word:"HEART",kind:"a quip",near:["HEART","BRAVE","SMILE","TEARS"],
+  text:"Anatomically: a fist-sized pump.\nIn practice: the bravest idiot you own -\nstill betting the house on people who leave,\nand somehow never learning.\nKeep it exactly that way."},
+ {word:"STAR",kind:"a poem",near:["STAR","COMET","METEOR","SOLAR","LUNAR","ORBIT","PLANET"],
+  text:"By the time it reaches you it may already be gone.\nYou steer by it anyway.\nThat is the whole trick of distance:\nthe light arrives long after the fire,\nand it is still enough to lead you home."},
+ {word:"STORM",kind:"a small story",near:["STORM","CLOUD","RIVER","FIELD"],
+  text:"The forecast said clear. The barometer disagreed, quietly, all afternoon.\nBy dusk the trees had started their nervous talking.\nWe brought the chairs in, filled the jugs, and waited -\nand when it finally broke it was not punishment but relief,\nthe sky saying at last the thing it had held in all day."},
+ {word:"SEED",kind:"a poem",near:["SEED","FOREST","FLOWER","GRASS","FIELD","MAPLE","CEDAR"],
+  text:"Small enough to lose in a crease of your palm,\npatient enough to outwait you.\nIt asks for dirt and dark and the long odds,\nand keeps, folded inside it,\nan entire summer it has never seen."},
+ {word:"DOOR",kind:"a quip",near:["DOOR","HINGE","HOUSE","WINDOW","GUARD"],
+  text:"Every wall is just a door that gave up.\nMost of the ones you feared were never locked.\nYou only had to lean."},
+ {word:"ROOT",kind:"a poem",near:["FOREST","STONE","CEDAR","MAPLE","FIELD","SEED"],
+  text:"The tree you admire is the smaller half.\nThe rest is downward - gripping the dark,\ndrinking from stones -\nall the work that holds the green aloft\ndone where no one thinks to look."},
+ {word:"RIVER",kind:"a poem",near:["RIVER","OCEAN","TIDE","SHORE","STONE","CANYON","VALLEY"],
+  text:"It is the same river and never the same water.\nThat is the whole secret, and you are like it:\na shape the going keeps,\na name we give to something\nthat refuses, gloriously, to stay."},
+ {word:"EMBER",kind:"a poem",near:["BLAZE","SMOKE","STOVE","CANDLE"],
+  text:"After the blaze decides it is done,\nthis is what keeps its mind:\na low red argument in the ash,\nready, if you lean close and breathe,\nto remember the whole fire."},
+ {word:"NEST",kind:"a small story",near:["RAVEN","EAGLE","TWINE"],
+  text:"They build it from whatever the wind left lying around -\nstring, a lost ribbon, the soft inside of something that failed.\nNothing in it was made for the job.\nAnd yet it holds, just long enough,\nthe only thing it was ever for."},
+ {word:"TRUTH",kind:"a quip",near:["TRUST","RIDDLE","GHOST","MIRROR"],
+  text:"It rarely shouts.\nIt waits - the way a step you missed in the dark waits:\npatient, exact,\nand entirely unimpressed by what you'd prefer."}
+];
+
+function extendPuzzle(P){
+  const V=P.solid.V, F=P.solid.F;
+  const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+  const cen=f=>{const c=[0,0,0];f.forEach(vi=>{for(let k=0;k<3;k++)c[k]+=V[vi][k]/3;});return c;};
+  const used=new Set(P.edges.map(e=>e.word));
+  const _mf=(typeof MOODFILTER!=='undefined'&&MOODFILTER)?PAYOFFS.filter(p=>MOODFILTER.indexOf(p.word)>=0):PAYOFFS;
+  const _pool=_mf.length?_mf:PAYOFFS;
+  const payoff=_pool[(Math.random()*_pool.length)|0];P.payoff=payoff;P.coreWord=payoff.word;
+  const prefer=new Set(payoff.near||[]);
+  const bset=()=>{const a=_shuf(BANK);a.sort((x,y)=>(prefer.has(y.word)?1:0)-(prefer.has(x.word)?1:0));return a;};
+  const byPair={};for(const e of BANK){const k=[e.word[0],e.word[e.word.length-1]].sort().join('');(byPair[k]=byPair[k]||[]).push(e);}
+  const findPair=(la,lb)=>{const list=_shuf(byPair[[la,lb].sort().join('')]||[]);for(const w of list)if(!used.has(w.word)){used.add(w.word);return w;}return null;};
+  const findAny=()=>{for(const w of bset())if(!used.has(w.word)){used.add(w.word);return w;}return null;};
+  const findCore=(X)=>{for(const w of bset()){if(used.has(w.word))continue;if(w.word[w.word.length-1]===X){used.add(w.word);return w;}}return null;};
+  P.faceWords=F.map((f,fi)=>{
+    const G=cen(f);const La=P.vertices[f[0]].sol,Lb=P.vertices[f[1]].sol,Lc=P.vertices[f[2]].sol;
+    const opts=_shuf([[f[0],f[2],La,Lc],[f[0],f[1],La,Lb],[f[1],f[2],Lb,Lc]]);
+    let pick=null,from=null,to=null;
+    for(const [s2,t2,ls,lt] of opts){const w=findPair(ls,lt);if(w){pick=w;from=s2;to=t2;if(w.word[0]!==P.vertices[s2].sol){from=t2;to=s2;}break;}}
+    let cells=[],fallback=false,word,clue;
+    if(pick){word=pick.word;clue=pick.clue;const A=V[from],C=V[to],L=word.length;
+      for(let k=0;k<L;k++){const t=k/(L-1);const base=lerp(A,C,t);const p3=lerp(base,G,0.42*Math.sin(Math.PI*t));
+        if(k===0)cells.push({kind:'v',v:from,p3:A,letter:word[k]});
+        else if(k===L-1)cells.push({kind:'v',v:to,p3:C,letter:word[k]});
+        else cells.push({kind:'fc',key:'F'+fi+'_'+k,p3,letter:word[k]});}
+    }else{const w=findAny();fallback=true;word=w.word;clue=w.clue;
+      const A=lerp(V[f[0]],V[f[1]],0.5),C=lerp(V[f[1]],V[f[2]],0.5),L=word.length;
+      for(let k=0;k<L;k++){const t=k/(L-1);const base=lerp(A,C,t);const p3=lerp(base,G,0.3*Math.sin(Math.PI*t));
+        cells.push({kind:'fc',key:'F'+fi+'_'+k,p3,letter:word[k]});}}
+    return {layer:'face',face:fi,word,clue,len:word.length,cells,fallback,num:'F'+(fi+1)};
+  });
+  // choose the center letter to maximise how many corner->center words exist
+  const cornerSet=new Set(P.vertices.map(v=>v.sol));
+  const endCnt={};for(const e of BANK){if(cornerSet.has(e.word[0]))endCnt[e.word[e.word.length-1]]=(endCnt[e.word[e.word.length-1]]||0)+1;}
+  let X='E',bc=-1;for(const k in endCnt)if(endCnt[k]>bc){bc=endCnt[k];X=k;}
+  P.coreLetter=X;
+  const findSE=(a,b)=>{for(const w of bset()){if(used.has(w.word))continue;if(w.word[0]===a&&w.word[w.word.length-1]===b){used.add(w.word);return w;}}return null;};
+  const qbez=(A,Cc,O,t)=>{const u=1-t;return [u*u*A[0]+2*u*t*Cc[0]+t*t*O[0],u*u*A[1]+2*u*t*Cc[1]+t*t*O[1],u*u*A[2]+2*u*t*Cc[2]+t*t*O[2]];};
+  P.spokeWords=F.map((f,fi)=>{
+    const G=cen(f),O=[0,0,0];const Cc=[G[0]*1.25,G[1]*1.25,G[2]*1.25];
+    let chosen=null,cornerV=null;
+    for(const cvx of _shuf([f[0],f[1],f[2]])){const w=findSE(P.vertices[cvx].sol,X);if(w){chosen=w;cornerV=cvx;break;}}
+    const cells=[];
+    if(chosen){const word=chosen.word,L=word.length,A=V[cornerV];
+      for(let k=0;k<L;k++){const t=k/(L-1);const p3=qbez(A,Cc,O,t);
+        if(k===0)cells.push({kind:'v',v:cornerV,p3:A,letter:word[0]});
+        else if(k===L-1)cells.push({kind:'core',p3:O,letter:word[L-1]});
+        else cells.push({kind:'sc',key:'S'+fi+'_'+k,p3,letter:word[k]});}
+      return {layer:'spoke',face:fi,word,clue:chosen.clue,len:L,cells,cornerV,connected:true,num:'C'+(fi+1)};
+    }
+    const w=findCore(X)||findAny();const word=w.word,L=word.length;
+    for(let k=0;k<L;k++){const t=k/(L-1);const p3=qbez(G,Cc,O,t);
+      if(k===L-1)cells.push({kind:'core',p3:O,letter:word[k]});
+      else cells.push({kind:'sc',key:'S'+fi+'_'+k,p3,letter:word[k]});}
+    return {layer:'spoke',face:fi,word,clue:w.clue,len:L,cells,connected:false,num:'C'+(fi+1)};
+  });
+  return P;
+}
+function makePoem(P){
+  const ws=allWords(P).map(w=>w.word.toLowerCase());const pool=_shuf(ws.filter(w=>w.length>=3));
+  let i=0;const pick=()=>pool[(i++)%pool.length];
+  return [
+    "I kept a "+pick()+" where the "+pick()+" should be,",
+    "and called it "+pick()+".",
+    "Every "+pick()+" was a door I mistook for a wall,",
+    "every "+pick()+" a key I mistook for a "+pick()+".",
+    "Follow the "+pick()+" down past the "+pick()+",",
+    "past the "+pick()+" and the patient "+pick()+",",
+    "and you arrive, at last, at the "+pick()+":",
+    "the small bright "+pick()+" that held the whole thing open."
+  ].join("\n");
+}
+/* ============================================================
+   3D RUMI — layered dig: edges -> faces -> core (+ prize)
+   ============================================================ */
+const SIZES={
+  tetra:{label:"Tetra",sub:"edges 6 · faces 4",words:6},
+  hexa:{label:"Hexa",sub:"edges 9 · faces 6",words:9},
+  octa:{label:"Octa",sub:"edges 12 · faces 8",words:12},
+  deca:{label:"Deca",sub:"edges 15 · faces 10",words:15},
+  icosa:{label:"Icosa",sub:"edges 30 · faces 20",words:30}
+};
+const SAVE="rumi3d_v3";
+let store=load();function load(){try{return JSON.parse(localStorage.getItem(SAVE))||{};}catch(e){return {};}}
+function persist(){localStorage.setItem(SAVE,JSON.stringify(store));}
+
+let P=null,sizeName=store.size||"octa";
+let cv,ctx,W,H,CX,CY,SCALE,DPR;
+let view={yaw:0.6,pitch:-0.5,auto:true,drag:false,lastX:0,lastY:0,moved:0,idle:0,zoom:1};
+let sel={word:null,cellIdx:0};
+let projCells=[],focusAnim=null;
+let timer=0,tick=null,started=false,won=false;
+let particles=[],doneSet=new Set(),coreEnergy=0,winFlash=0,corePulse=0;
+const $=id=>document.getElementById(id);
+function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+
+/* ---------- new puzzle ---------- */
+function newPuzzle(){
+  won=false;started=false;clearInterval(tick);timer=0;$("timer").textContent="0:00";
+  particles=[];doneSet=new Set();coreEnergy=0;winFlash=0;
+  $("spinner").classList.add("show");
+  setTimeout(()=>{
+    let p=null,g=0;do{p=buildPuzzle(sizeName);g++;}while(!p&&g<4);
+    P=p||buildPuzzle("octa");extendPuzzle(P);precompute(P);
+    sel={word:P.edges[0],cellIdx:0};
+    view.yaw=0.6;view.pitch=-0.5;view.auto=true;view.idle=0;
+    buildClues();updateHud();$("spinner").classList.remove("show");
+    focusWord(P.edges[0],false);resize();
+  },40);
+}
+
+/* ---------- precompute (face/edge colors, adjacency) ---------- */
+function precompute(P){
+  const key=(a,b)=>Math.min(a,b)+"_"+Math.max(a,b);
+  P._edgeByPair={};P.edges.forEach(e=>{P._edgeByPair[key(e.from,e.to)]=e;});
+  P._faceEdges=P.solid.F.map(f=>[P._edgeByPair[key(f[0],f[1])],P._edgeByPair[key(f[1],f[2])],P._edgeByPair[key(f[0],f[2])]]);
+  P._faceCentroid=P.solid.F.map(f=>{const c=[0,0,0];f.forEach(vi=>{const p=vpos(vi);for(let k=0;k<3;k++)c[k]+=p[k]/3;});return c;});
+  P._faceColor=P.solid.F.map((f,fi)=>{
+    const c=P._faceCentroid[fi];const n=Math.hypot(c[0],c[1],c[2])||1;const nx=c[0]/n,ny=c[1]/n,nz=c[2]/n;
+    const az=Math.atan2(ny,nx);const sector=((Math.floor((az+Math.PI)/(2*Math.PI)*3))%3+3)%3;
+    const hue=[186,300,56][sector]+nz*24;return hslRgb(hue/360,0.85,0.56);
+  });
+  const ef={};P.solid.F.forEach((f,fi)=>{P._faceEdges[fi].forEach(e=>{if(e){(ef[e.ei]=ef[e.ei]||[]).push(P._faceColor[fi]);}});});
+  P.edges.forEach(e=>{const fs=ef[e.ei]||[[150,120,255]];e._col=[0,1,2].map(k=>Math.round(fs.reduce((a,c)=>a+c[k],0)/fs.length));});
+  P._cornerEdges={};P.vertices.forEach(v=>P._cornerEdges[v.i]=[]);P.edges.forEach(e=>{P._cornerEdges[e.from].push(e);P._cornerEdges[e.to].push(e);});
+}
+function hslRgb(h,s,l){h=(h%1+1)%1;function f(n){const k=(n+h*12)%12;const a=s*Math.min(l,1-l);return l-a*Math.max(-1,Math.min(k-3,9-k,1));}return [Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];}
+function cornerBleed(vi){const es=P._cornerEdges[vi];let n=0;const c=[0,0,0];for(const e of es){if(wordDone(P,e)){n++;for(let k=0;k<3;k++)c[k]+=e._col[k];}}if(!n)return null;return {col:[Math.round(c[0]/n),Math.round(c[1]/n),Math.round(c[2]/n)],w:n/es.length};}
+
+/* ---------- progression / gating ---------- */
+function faceEdgesSolved(fi){return P._faceEdges[fi].every(e=>e&&wordDone(P,e));}
+function faceWordSolved(fi){return wordDone(P,P.faceWords[fi]);}
+function faceUnlocked(fw){return faceEdgesSolved(fw.face);}
+function spokeUnlocked(sw){return faceWordSolved(sw.face);}
+function faceDeveloping(fi){return P._faceEdges[fi].some(e=>e&&wordDone(P,e));}
+function stageCounts(){
+  const eS=P.edges.filter(e=>wordDone(P,e)).length;
+  const fS=P.faceWords.filter((w,fi)=>faceWordSolved(fi)).length;
+  const cS=P.spokeWords.filter(w=>wordDone(P,w)).length;
+  return {eS,eT:P.edges.length,fS,fT:P.faceWords.length,cS,cT:P.spokeWords.length};
+}
+function visibleWords(){
+  const out=[...P.edges];
+  P.faceWords.forEach(w=>out.push(w));
+  P.spokeWords.forEach(w=>{if(spokeUnlocked(w))out.push(w);});
+  return out;
+}
+function selectable(w){return w.layer==='edge'||(w.layer==='face'&&faceUnlocked(w))||(w.layer==='spoke'&&spokeUnlocked(w));}
+function selectableList(){return visibleWords().filter(selectable);}
+
+/* ---------- geometry ---------- */
+function rot(p){const cy=Math.cos(view.yaw),sy=Math.sin(view.yaw),cx=Math.cos(view.pitch),sx=Math.sin(view.pitch);
+  let x=p[0]*cy+p[2]*sy,z=-p[0]*sy+p[2]*cy,y=p[1];return [x,y*cx-z*sx,y*sx+z*cx];}
+function project(p){const r=rot(p);const D=4.6;const s=SCALE*view.zoom/(D-r[2]);return {x:CX+r[0]*s,y:CY-r[1]*s,z:r[2],s};}
+function vpos(i){return P.vertices[i].p;}
+function cellPoint(c){return c.kind==='v'?P.vertices[c.v].p:(c.kind==='core'?[0,0,0]:c.p3);}
+function projCell(c){return project(cellPoint(c));}
+function norm(z){return Math.max(0,Math.min(1,(z+1.6)/3.2));}
+function mid(e){const A=vpos(e.from),B=vpos(e.to);return [(A[0]+B[0])/2,(A[1]+B[1])/2,(A[2]+B[2])/2];}
+function wordCentroid(w){const c=[0,0,0];w.cells.forEach(cell=>{const p=cellPoint(cell);for(let k=0;k<3;k++)c[k]+=p[k]/w.cells.length;});return c;}
+function angDiff(a,b){let d=(b-a)%(2*Math.PI);if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;return d;}
+
+/* ---------- render ---------- */
+function resize(){DPR=Math.min(window.devicePixelRatio||1,2);const box=cv.parentElement.getBoundingClientRect();
+  W=Math.max(320,box.width);H=Math.max(360,Math.min(620,box.height||560));
+  cv.style.width=W+"px";cv.style.height=H+"px";cv.width=W*DPR;cv.height=H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);CX=W/2;CY=H/2;SCALE=Math.min(W,H)*0.92;}
+function render(){
+  if(!P){requestAnimationFrame(render);return;}
+  try{
+  if(focusAnim){focusAnim.t+=0.08;const k=Math.min(1,focusAnim.t);const e=1-Math.pow(1-k,3);
+    view.yaw=focusAnim.y0+angDiff(focusAnim.y0,focusAnim.yaw)*e;view.pitch=focusAnim.p0+(focusAnim.pitch-focusAnim.p0)*e;if(k>=1)focusAnim=null;}
+  else if(view.auto&&!view.drag){view.idle++;if(view.idle>90)view.yaw+=0.0034;}
+  if(won){view.yaw+=0.004;winFlash=Math.min(1,winFlash+0.02);}
+  const sc=stageCounts();const prog=(sc.eS+sc.fS+sc.cS)/(sc.eT+sc.fT+sc.cT);
+  coreEnergy+=(prog-coreEnergy)*0.07;corePulse*=0.93;
+  ctx.clearRect(0,0,W,H);
+  // burst on any newly completed word
+  for(const w of [...P.edges,...P.faceWords,...P.spokeWords]){const id=w.layer+w.num;const d=wordDone(P,w);
+    if(d&&!doneSet.has(id)){doneSet.add(id);burst(w);}else if(!d&&doneSet.has(id))doneSet.delete(id);}
+  // faces split for true interior
+  const faceItems=P.solid.F.map((f,fi)=>({fi,z:rot(P._faceCentroid[fi])[2]})).sort((a,b)=>a.z-b.z);
+  for(const {fi,z} of faceItems.filter(x=>x.z<0))drawFace(fi,norm(z));
+  drawInterior(prog);
+  drawSpokes();
+  drawCorePulses();
+  for(const {fi,z} of faceItems.filter(x=>x.z>=0))drawFace(fi,norm(z));
+  // structure lines
+  for(const e of P.edges.slice().sort((a,b)=>rot(mid(a))[2]-rot(mid(b))[2]))drawEdge(e);
+  drawFaceChords();
+  drawParticles();
+  drawNodes();
+  if(sel.word)drawDir(sel.word);
+  }catch(e){ if(typeof console!=='undefined')console.warn('frame',e); }
+  requestAnimationFrame(render);
+}
+function drawFace(fi,depth){
+  const f=P.solid.F[fi];const A=project(vpos(f[0])),B=project(vpos(f[1])),C=project(vpos(f[2]));
+  const fp=(P._faceEdges[fi].filter(e=>e&&wordDone(P,e)).length)/3;const col=P._faceColor[fi];
+  ctx.save();ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.closePath();ctx.clip();
+  ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.07+0.42*fp+0.05*depth*fp})`;ctx.fill();
+  const size=Math.max(Math.hypot(A.x-B.x,A.y-B.y),Math.hypot(B.x-C.x,B.y-C.y),Math.hypot(A.x-C.x,A.y-C.y))||1;
+  for(const [pp,vi] of [[A,f[0]],[B,f[1]],[C,f[2]]]){const cb=cornerBleed(vi);if(!cb)continue;
+    const g=ctx.createRadialGradient(pp.x,pp.y,0,pp.x,pp.y,size);const a=0.34*cb.w*(0.45+0.55*fp);
+    g.addColorStop(0,`rgba(${cb.col[0]},${cb.col[1]},${cb.col[2]},${a})`);g.addColorStop(1,`rgba(${cb.col[0]},${cb.col[1]},${cb.col[2]},0)`);
+    ctx.fillStyle=g;ctx.fill();}
+  ctx.restore();
+  if(fp>0){ctx.save();ctx.globalCompositeOperation="lighter";ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.closePath();
+    ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.05*fp})`;ctx.fill();ctx.restore();}
+}
+function drawEdge(e){const A=project(vpos(e.from)),B=project(vpos(e.to));const isSel=sel.word===e;const depth=norm((A.z+B.z)/2);const done=wordDone(P,e);
+  ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);
+  if(isSel){ctx.strokeStyle=`rgba(124,92,255,${0.55+0.45*depth})`;ctx.lineWidth=3.6;}
+  else if(done){const col=e._col;ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.5+0.5*depth})`;ctx.lineWidth=2.6;}
+  else{ctx.strokeStyle=`rgba(120,140,190,${0.14+0.30*depth})`;ctx.lineWidth=1.8;}ctx.stroke();}
+function polyline(cells){ctx.beginPath();cells.forEach((c,i)=>{const p=projCell(c);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);});}
+function drawFaceChords(){
+  for(const fw of P.faceWords){const dev=faceDeveloping(fw.face),unl=faceUnlocked(fw),done=wordDone(P,fw),isSel=sel.word===fw;
+    if(!dev&&!unl)continue;
+    polyline(fw.cells);
+    if(isSel){ctx.strokeStyle="rgba(124,92,255,.9)";ctx.lineWidth=3;}
+    else if(done){ctx.strokeStyle="rgba(120,235,200,.7)";ctx.lineWidth=2.2;}
+    else if(unl){ctx.strokeStyle="rgba(200,190,255,.5)";ctx.lineWidth=1.8;}
+    else{ctx.strokeStyle="rgba(160,170,210,.18)";ctx.lineWidth=1.2;}  // developing ghost
+    ctx.stroke();
+  }
+}
+function drawSpokes(){
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  for(const sw of P.spokeWords){if(!spokeUnlocked(sw))continue;const done=wordDone(P,sw),isSel=sel.word===sw;
+    polyline(sw.cells);
+    if(isSel){ctx.strokeStyle="rgba(150,120,255,.95)";ctx.lineWidth=2.6;}
+    else if(done){ctx.strokeStyle="rgba(255,220,150,.7)";ctx.lineWidth=2.0;}
+    else{ctx.strokeStyle="rgba(190,180,255,.45)";ctx.lineWidth=1.5;}
+    ctx.stroke();}
+  ctx.restore();
+}
+function drawNodes(){
+  const seen=new Set();const nodes=[];
+  const add=(words,gate)=>{for(const w of words){if(gate&&!gate(w))continue;for(const c of w.cells){
+    const id=c.kind==='v'?'v'+c.v:(c.kind==='core'?'core':c.key);if(seen.has(id))continue;seen.add(id);
+    nodes.push({id,c,pos:projCell(c)});}}};
+  add(P.edges);
+  add(P.faceWords,faceUnlocked);
+  add(P.spokeWords,spokeUnlocked);
+  nodes.sort((a,b)=>a.pos.z-b.pos.z);
+  projCells=[];
+  for(const n of nodes)drawNode(n);
+}
+let checkFlash=false;
+function drawNode(n){
+  const c=n.c,pos=n.pos,depth=norm(pos.z);const isShared=(c.kind==='v'||c.kind==='core');
+  const cur=getCur(P,c),correct=cur&&cur===c.letter;
+  const zf=Math.max(0.75,Math.min(1.7,view.zoom));
+  const baseR=(isShared?13:10.5)*(0.62+0.5*depth)*zf;
+  const active=sel.word&&sameCell(sel.word.cells[sel.cellIdx],c);
+  const onSel=sel.word&&sel.word.cells.some(x=>sameCell(x,c));
+  projCells.push({c,x:pos.x,y:pos.y,r:baseR+4});
+  // solved cells fade back (preserve the shape, demote the letter) unless they're in the current word
+  const demoted=correct&&!active&&!onSel&&!won;
+  const letterDim=demoted?(isShared?0.85:0.5):1;     // fade the letter, not the chip
+  if(correct&&(active||onSel||c.kind==='core')&&!demoted){ctx.save();ctx.globalCompositeOperation="lighter";const g=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,baseR*2.1);
+    const gc=c.kind==='core'?"255,210,140":(c.kind==='v'?"160,120,255":"110,220,200");
+    g.addColorStop(0,`rgba(${gc},${0.28+0.25*depth})`);g.addColorStop(1,`rgba(${gc},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(pos.x,pos.y,baseR*2.1,0,7);ctx.fill();ctx.restore();}
+  // backing chip stays solid so letters keep contrast over the bright CMY faces
+  ctx.beginPath();ctx.arc(pos.x,pos.y,baseR,0,7);
+  ctx.fillStyle=isShared?`rgba(38,31,74,${0.72+0.28*depth})`:`rgba(20,28,50,${0.7+0.3*depth})`;ctx.fill();
+  ctx.lineWidth=isShared?2:1.4;
+  ctx.globalAlpha=demoted?0.55:1;
+  ctx.strokeStyle=active?"#4cc9f0":(onSel?"rgba(124,92,255,.9)":(c.kind==='core'?`rgba(255,210,140,${0.5+0.4*depth})`:(isShared?`rgba(124,92,255,${0.4+0.5*depth})`:`rgba(120,140,190,${0.22+0.4*depth})`)));
+  ctx.stroke();ctx.globalAlpha=1;
+  if(cur){ctx.globalAlpha=letterDim;ctx.fillStyle=won?"#fff":(c.kind==='core'?"#ffe08a":(isShared?"#dccfff":"#eef1fb"));
+    ctx.font="700 "+Math.round(baseR*1.05)+"px 'Segoe UI',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(cur,pos.x,pos.y+1);ctx.globalAlpha=1;}
+  if(checkFlash&&cur){ctx.beginPath();ctx.arc(pos.x,pos.y,baseR,0,7);ctx.strokeStyle=correct?"#3ddc97":"#ff5d73";ctx.lineWidth=2.4;ctx.stroke();}
+}
+function sameCell(a,b){if(!a||!b||a.kind!==b.kind)return false;if(a.kind==='v')return a.v===b.v;if(a.kind==='core')return true;return a.key===b.key;}
+function drawDir(w){const A=projCell(w.cells[0]),B=projCell(w.cells[w.cells.length-1]);
+  const dx=B.x-A.x,dy=B.y-A.y,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,s=9;const tip={x:A.x+dx*0.82,y:A.y+dy*0.82};
+  ctx.beginPath();ctx.moveTo(tip.x,tip.y);ctx.lineTo(tip.x-ux*s-uy*s*0.6,tip.y-uy*s+ux*s*0.6);ctx.lineTo(tip.x-ux*s+uy*s*0.6,tip.y-uy*s-ux*s*0.6);ctx.closePath();ctx.fillStyle="#4cc9f0";ctx.fill();
+  ctx.beginPath();ctx.arc(A.x,A.y,15,0,7);ctx.strokeStyle="#4cc9f0";ctx.lineWidth=2;ctx.stroke();}
+
+/* ---------- interior: growing crystal + lattice ---------- */
+const INNER=(function(){const p=(1+Math.sqrt(5))/2;let V=[[-1,p,0],[1,p,0],[-1,-p,0],[1,-p,0],[0,-1,p],[0,1,p],[0,-1,-p],[0,1,-p],[p,0,-1],[p,0,1],[-p,0,-1],[-p,0,1]];
+  V=V.map(q=>{const n=Math.hypot(q[0],q[1],q[2]);return q.map(x=>x/n);});const d2=(a,b)=>a.reduce((s,x,i)=>s+(x-b[i])**2,0);let mn=1e9;
+  for(let i=0;i<12;i++)for(let j=i+1;j<12;j++)mn=Math.min(mn,d2(V[i],V[j]));let E=[];
+  for(let i=0;i<12;i++)for(let j=i+1;j<12;j++)if(Math.abs(d2(V[i],V[j])-mn)<1e-3)E.push([i,j]);
+  const adj=Array.from({length:12},()=>[]);E.forEach(([a,b],i)=>{adj[a].push([b,i]);adj[b].push([a,i]);});
+  const seenE=new Set(),order=[],seenV=new Set([0]),q=[0];while(q.length){const v=q.shift();for(const[w,ei]of adj[v]){if(!seenE.has(ei)){seenE.add(ei);order.push(E[ei]);}if(!seenV.has(w)){seenV.add(w);q.push(w);}}}
+  E.forEach((e,i)=>{if(!seenE.has(i))order.push(e);});return {V,E:order};})();
+function rotY(v,a){const c=Math.cos(a),s=Math.sin(a);return [v[0]*c+v[2]*s,v[1],-v[0]*s+v[2]*c];}
+function rotX(v,a){const c=Math.cos(a),s=Math.sin(a);return [v[0],v[1]*c-v[2]*s,v[1]*s+v[2]*c];}
+function drawInterior(prog){
+  const O=project([0,0,0]);const t=(typeof performance!=="undefined"?performance.now():Date.now())*0.001;
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  // faint ambient wires from solved edges to the seed
+  for(const e of P.edges){if(!wordDone(P,e))continue;const M=project(mid(e));const col=e._col;
+    ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},0.12)`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(O.x,O.y);ctx.lineTo(M.x,M.y);ctx.stroke();}
+  // growing seed crystal
+  const scale=0.05+0.46*coreEnergy,spin=t*0.4;
+  const iv=INNER.V.map(v=>project(rotX(rotY([v[0]*scale,v[1]*scale,v[2]*scale],spin),spin*0.62)));
+  const revealed=Math.min(INNER.E.length,Math.round(prog*INNER.E.length));const cols=[[110,235,235],[235,110,235],[235,235,110]];
+  for(let k=0;k<revealed;k++){const e=INNER.E[k];const a=iv[e[0]],b=iv[e[1]];const col=cols[k%3];
+    ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.3+0.45*coreEnergy})`;ctx.lineWidth=1.15;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+  if(prog>0){const sv=new Set();for(let k=0;k<revealed;k++){sv.add(INNER.E[k][0]);sv.add(INNER.E[k][1]);}for(const vi of sv){const pv=iv[vi];ctx.fillStyle=`rgba(228,232,255,${0.28+0.45*coreEnergy})`;ctx.beginPath();ctx.arc(pv.x,pv.y,1.5+1.5*coreEnergy,0,7);ctx.fill();}}
+  const R=SCALE*view.zoom*(0.018+0.05*coreEnergy)*(1+winFlash*0.28+corePulse*0.18);const gg=ctx.createRadialGradient(O.x,O.y,0,O.x,O.y,R);const al=0.16+0.5*coreEnergy+corePulse*0.22;
+  gg.addColorStop(0,`rgba(238,240,255,${al})`);gg.addColorStop(1,"rgba(150,130,255,0)");ctx.fillStyle=gg;ctx.beginPath();ctx.arc(O.x,O.y,R,0,7);ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- particles ---------- */
+function burst(w){if(w.layer==='spoke')corePulse=Math.min(1.6,corePulse+1);const c=wordCentroid(w);const m=project(c);const col=w.layer==='spoke'?[255,210,140]:(w.layer==='face'?[120,235,200]:[124,92,255]);
+  for(let i=0;i<14;i++){const ang=Math.random()*7,sp=1+Math.random()*3.2;particles.push({x:m.x,y:m.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:1,col});}}
+function spokeColor(sw){if(sw.cornerV!=null&&sw.cornerV!==undefined){const cb=cornerBleed(sw.cornerV);if(cb)return cb.col;}return P._faceColor[sw.face]||[200,180,255];}
+function alongPath(pts,t){const n=pts.length;if(n<=1)return pts[0]||{x:0,y:0};const f=Math.max(0,Math.min(0.9999,t))*(n-1);const i=Math.floor(f);const a=pts[i],b=pts[i+1]||pts[i];const u=f-i;return {x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u};}
+function drawCorePulses(){
+  const t=(typeof performance!=="undefined"?performance.now():Date.now())*0.001;
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  for(const sw of P.spokeWords){if(!wordDone(P,sw))continue;
+    const pts=sw.cells.map(c=>projCell(c));const col=spokeColor(sw);
+    for(let q=0;q<2;q++){const ph=((t*0.5)+q*0.5+sw.face*0.13)%1;          // corner(0) -> core(1)
+      const p=alongPath(pts,ph),tail=alongPath(pts,Math.max(0,ph-0.07));
+      const fade=0.85*(0.35+0.65*ph);
+      const g=ctx.createLinearGradient(tail.x,tail.y,p.x,p.y);
+      g.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},0)`);g.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},${fade})`);
+      ctx.strokeStyle=g;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(p.x,p.y);ctx.stroke();
+      ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${fade})`;ctx.beginPath();ctx.arc(p.x,p.y,2.1+1.2*ph,0,7);ctx.fill();}
+  }
+  ctx.restore();
+}
+function drawParticles(){if(!particles.length)return;ctx.save();ctx.globalCompositeOperation="lighter";
+  for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vx*=0.94;p.vy*=0.94;p.life-=0.03;if(p.life<=0)continue;ctx.fillStyle=`rgba(${p.col[0]},${p.col[1]},${p.col[2]},${p.life})`;ctx.beginPath();ctx.arc(p.x,p.y,2.4*p.life+0.6,0,7);ctx.fill();}
+  particles=particles.filter(p=>p.life>0);ctx.restore();}
+
+/* ---------- focus / selection ---------- */
+function focusWord(w,animate=true){const m=wordCentroid(w);const n=Math.hypot(m[0],m[1],m[2])||1;const u=[m[0]/n,m[1]/n,m[2]/n];
+  const yaw=Math.atan2(u[0],u[2]);const pitch=-Math.asin(Math.max(-1,Math.min(1,u[1])));view.idle=0;
+  if(animate)focusAnim={y0:view.yaw,p0:view.pitch,yaw,pitch,t:0};else{view.yaw=yaw;view.pitch=pitch;}}
+function firstEmpty(w){const i=w.cells.findIndex(c=>!getCur(P,c));return i<0?0:i;}
+function setSel(w,idx){sel={word:w,cellIdx:idx};const e=w;$("curNum").textContent=e.num;$("curClue").textContent=e.clue+" ("+e.len+")";
+  document.querySelectorAll("#clueList li").forEach(li=>li.classList.toggle("sel",li.dataset.id===w.layer+w.num));
+  const li=document.querySelector(`#clueList li[data-id="${w.layer+w.num}"]`);if(li)li.scrollIntoView({block:"nearest"});view.idle=0;}
+function onDown(x,y){view.drag=true;view.moved=0;view.lastX=x;view.lastY=y;view.auto=false;}
+function onMove(x,y){if(!view.drag)return;const dx=x-view.lastX,dy=y-view.lastY;view.moved+=Math.abs(dx)+Math.abs(dy);
+  view.yaw+=dx*0.008;view.pitch+=dy*0.008;view.pitch=Math.max(-1.4,Math.min(1.4,view.pitch));view.lastX=x;view.lastY=y;view.idle=0;focusAnim=null;}
+function onUp(x,y){const click=view.moved<6;view.drag=false;view.idle=0;setTimeout(()=>view.auto=true,3500);if(click)hit(x,y);}
+function hit(x,y){let best=null,bd=1e9;for(const pc of projCells){const d=Math.hypot(pc.x-x,pc.y-y);if(d<pc.r&&d<bd){bd=d;best=pc;}}
+  if(!best)return;
+  // find a selectable word containing this cell, prefer current
+  const cellEq=(a,b)=>sameCell(a,b);
+  let cand=null,ci=0;
+  if(sel.word&&selectable(sel.word)){const i=sel.word.cells.findIndex(c=>cellEq(c,best.c));if(i>=0){cand=sel.word;ci=i;}}
+  if(!cand){for(const w of selectableList()){const i=w.cells.findIndex(c=>cellEq(c,best.c));if(i>=0){cand=w;ci=i;break;}}}
+  if(cand)setSel(cand,ci);
+}
+function typeLetter(ch){if(!sel.word||!selectable(sel.word))return;setCur(P,sel.word.cells[sel.cellIdx],ch);
+  sel.cellIdx=Math.min(sel.cellIdx+1,sel.word.cells.length-1);updateClues();markStart();if(solved(P))winNow();}
+function markStart(){if(!started){started=true;tick=setInterval(()=>{timer++;$("timer").textContent=fmt(timer);},1000);}}
+function backspace(){if(!sel.word)return;const w=sel.word;if(getCur(P,w.cells[sel.cellIdx]))setCur(P,w.cells[sel.cellIdx],"");else{sel.cellIdx=Math.max(0,sel.cellIdx-1);setCur(P,w.cells[sel.cellIdx],"");}updateClues();}
+function moveCell(d){if(!sel.word)return;sel.cellIdx=Math.max(0,Math.min(sel.word.cells.length-1,sel.cellIdx+d));view.idle=0;}
+function nextWord(d){const list=selectableList();if(!list.length)return;let i=list.indexOf(sel.word);if(i<0)i=0;const n=(i+d+list.length)%list.length;const w=list[n];setSel(w,firstEmpty(w));focusWord(w);}
+
+/* ---------- clues ---------- */
+function buildClues(){const ul=$("clueList");ul.innerHTML="";
+  const group=(title,words,gateName)=>{const h=document.createElement("li");h.className="divider";h.textContent=title;ul.appendChild(h);
+    words.forEach(w=>{const li=document.createElement("li");li.dataset.id=w.layer+w.num;li.dataset.layer=w.layer;
+      li.innerHTML=`<b>${w.num}</b><span>${w.clue} <i>(${w.len})</i></span>`;
+      li.addEventListener("click",()=>{if(selectable(w)){setSel(w,firstEmpty(w));focusWord(w);}});ul.appendChild(li);});};
+  group("◆ Edges",P.edges);
+  group("△ Faces",P.faceWords);
+  group("✶ Core",P.spokeWords);
+  updateClues();
+}
+function updateClues(){
+  P.edges.concat(P.faceWords,P.spokeWords).forEach(w=>{const li=document.querySelector(`#clueList li[data-id="${w.layer+w.num}"]`);if(!li)return;
+    const done=wordDone(P,w),lock=!selectable(w);li.classList.toggle("done",done);li.classList.toggle("locked",lock);});
+  const sc=stageCounts();
+  $("solvedCount").textContent=(sc.eS+sc.fS+sc.cS)+"/"+(sc.eT+sc.fT+sc.cT);
+  const h=$("stageLine");if(h)h.textContent=`◆ ${sc.eS}/${sc.eT}  △ ${sc.fS}/${sc.fT}  ✶ ${sc.cS}/${sc.cT}`;
+  const tot=sc.eT+sc.fT+sc.cT,sv=sc.eS+sc.fS+sc.cS;$("progFill").style.width=(100*sv/tot)+"%";
+}
+
+/* ---------- check / hint / reveal ---------- */
+function check(){checkFlash=true;setTimeout(()=>checkFlash=false,1200);}
+function hint(){if(!sel.word||!selectable(sel.word))return;for(const c of sel.word.cells){if(getCur(P,c)!==c.letter){setCur(P,c,c.letter);break;}}updateClues();if(solved(P))winNow();}
+function revealCorner(){const v=P.vertices.find(v=>v.cur!==v.sol);if(v){v.cur=v.sol;updateClues();if(solved(P))winNow();}}
+function reveal(){if(!confirm("Reveal everything? (skips the dig)"))return;for(const w of [...P.edges,...P.faceWords,...P.spokeWords])for(const c of w.cells)setCur(P,c,c.letter);updateClues();winNow();}
+
+/* ---------- win / prize ---------- */
+function winNow(){if(won)return;won=true;clearInterval(tick);view.auto=true;view.idle=999;
+  store.size=sizeName;store["best_"+sizeName]=Math.min(store["best_"+sizeName]||1e9,timer);persist();confetti();
+  setTimeout(()=>{
+    $("card").innerHTML=`<h2>You reached the center</h2>
+      <p class="s2">${SIZES[sizeName].label} · ${P.edges.length+P.faceWords.length+P.spokeWords.length} words · ${fmt(timer)}</p>
+      <p class="s2">the words were all circling -</p>
+      <div class="reveal">${(P.payoff||{}).word||P.coreWord||""}</div>
+      <p class="kind">${(P.payoff||{}).kind||""}</p>
+      <div class="poem">${((P.payoff||{}).text||"").replace(/\n/g,"<br>")}</div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" onclick="document.getElementById('overlay').classList.remove('show')">Stay a while</button>
+        <button class="btn primary" onclick="nextFromWin()">New solid →</button></div>`;
+    $("overlay").classList.add("show");
+  },1100);}
+function nextFromWin(){$("overlay").classList.remove("show");showIntro();}
+
+/* ---------- hud / controls ---------- */
+function updateHud(){$("sizePill").textContent=SIZES[sizeName].label+" · "+SIZES[sizeName].sub;updateClues();}
+function buildControls(){const s=$("sizeSel");s.innerHTML="";
+  Object.keys(SIZES).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=SIZES[k].label+" — "+SIZES[k].words+" edges";s.appendChild(o);});
+  s.value=sizeName;s.addEventListener("change",()=>{sizeName=s.value;store.size=sizeName;persist();newPuzzle();});
+  $("btnNew").onclick=newPuzzle;$("btnCheck").onclick=check;$("btnHint").onclick=hint;$("btnCorner").onclick=revealCorner;$("btnReveal").onclick=reveal;
+  const zi=$("btnZoomIn"),zo=$("btnZoomOut");if(zi)zi.onclick=()=>setZoom(view.zoom*1.15);if(zo)zo.onclick=()=>setZoom(view.zoom*0.87);
+  const bi=$("btnIntent");if(bi)bi.onclick=showIntro;}
+function wireCanvas(){
+  cv.addEventListener("mousedown",e=>{const r=cv.getBoundingClientRect();onDown(e.clientX-r.left,e.clientY-r.top);});
+  window.addEventListener("mousemove",e=>{const r=cv.getBoundingClientRect();onMove(e.clientX-r.left,e.clientY-r.top);});
+  window.addEventListener("mouseup",e=>{const r=cv.getBoundingClientRect();onUp(e.clientX-r.left,e.clientY-r.top);});
+  cv.addEventListener("touchstart",e=>{const r=cv.getBoundingClientRect(),t=e.touches[0];onDown(t.clientX-r.left,t.clientY-r.top);},{passive:true});
+  cv.addEventListener("touchmove",e=>{const r=cv.getBoundingClientRect(),t=e.touches[0];onMove(t.clientX-r.left,t.clientY-r.top);},{passive:true});
+  cv.addEventListener("touchend",()=>onUp(view.lastX,view.lastY),{passive:true});
+  cv.addEventListener("wheel",e=>{e.preventDefault();setZoom(view.zoom*(e.deltaY<0?1.12:0.89));},{passive:false});}
+function setZoom(z){view.zoom=Math.max(0.5,Math.min(3,z));view.idle=0;}
+document.addEventListener("keydown",e=>{
+  if($("overlay").classList.contains("show")){if(e.key==="Enter")nextFromWin();return;}
+  if(/^[a-zA-Z]$/.test(e.key)){typeLetter(e.key.toUpperCase());e.preventDefault();}
+  else if(e.key==="Backspace"){backspace();e.preventDefault();}
+  else if(e.key==="ArrowRight"){moveCell(1);e.preventDefault();}
+  else if(e.key==="ArrowLeft"){moveCell(-1);e.preventDefault();}
+  else if(e.key==="Tab"){nextWord(e.shiftKey?-1:1);e.preventDefault();}
+  else if(e.key==="+"||e.key==="="){setZoom(view.zoom*1.12);e.preventDefault();}
+  else if(e.key==="-"||e.key==="_"){setZoom(view.zoom*0.89);e.preventDefault();}
+  else if(e.key===" "){if(sel.word)focusWord(sel.word);e.preventDefault();}});
+function confetti(){const c=$("confetti");c.style.display="block";c.width=innerWidth;c.height=innerHeight;const x=c.getContext("2d");
+  const cols=["#7c5cff","#4cc9f0","#3ddc97","#ffd166","#f72585"];
+  const ps=Array.from({length:150},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.4,r:4+Math.random()*6,c:cols[(Math.random()*cols.length)|0],vy:2+Math.random()*4,vx:-2+Math.random()*4,a:Math.random()*6}));
+  let f=0;(function run(){x.clearRect(0,0,c.width,c.height);ps.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.a+=.1;x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;x.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.6);x.restore();});f++;if(f<150)requestAnimationFrame(run);else c.style.display="none";})();}
+
+/* ---------- intent pick (pre-puzzle oracle) ---------- */
+const MOODS=[
+ {label:"A question",  words:["TRUTH","DOOR","TIME"],            line:"A question, then. The center is keeping one of its own."},
+ {label:"A hope",      words:["SEED","STAR","HOME","DREAM"],     line:"A hope. The shape is already leaning toward the light."},
+ {label:"A heaviness", words:["OCEAN","EMBER","RIVER","TIME","ROOT"], line:"Bring it down with you. The center has carried heavier."},
+ {label:"Restlessness",words:["STORM","RIVER","NEST","DOOR"],    line:"Restless. Good — so is the spinning thing."},
+ {label:"Wonder",      words:["STAR","DREAM","OCEAN","SEED"],    line:"Wonder. The oldest reason to go looking."},
+ {label:"Surprise me", words:null,                                line:"As you wish. Something is already circling."}
+];
+let MOODFILTER=null;
+function showIntro(){const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
+  const ln=$("introLine");if(ln)ln.textContent="";$("introOverlay").classList.add("show");}
+function pickMood(m){MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textContent=m.line;
+  document.querySelectorAll("#moodBtns .moodbtn").forEach(b=>b.disabled=true);
+  setTimeout(()=>{$("introOverlay").classList.remove("show");newPuzzle();},950);}
+
+function boot(){cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();showIntro();}
+boot();
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
