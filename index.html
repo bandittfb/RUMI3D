@@ -121,6 +121,14 @@
   .tutcard ul.tutsteps li b{color:var(--ink)}
   .tutcard .tuttip{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin:0 0 14px;line-height:1.45}
   .tutcard .btn.primary{width:100%}
+  .kbd{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;flex-direction:column;gap:5px;padding:6px 5px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(12,16,28,.97);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.45)}
+  .kbd.show{display:flex}
+  .kbd .krow{display:flex;gap:4px;justify-content:center}
+  .kbd .key{flex:1;max-width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:16px;font-weight:600;user-select:none;-webkit-user-select:none;cursor:pointer;touch-action:manipulation}
+  .kbd .key:active{background:var(--spine);color:#fff;border-color:var(--spine)}
+  .kbd .key.wide{max-width:66px;font-size:18px}
+  body.kbdopen{padding-bottom:172px}
+  @media(min-width:761px){.kbd{display:none!important}body.kbdopen{padding-bottom:0}}
 </style>
 </head>
 <body>
@@ -173,6 +181,7 @@
 </div></div>
 <div class="overlay" id="overlay"><div class="card" id="card"></div></div>
 <canvas id="confetti"></canvas>
+<div id="kbd" class="kbd" aria-hidden="true"></div>
 <script>
 /* ============ 3D RUMI: generator core + play model ============ */
 const RAW = [
@@ -448,10 +457,18 @@ let projCells=[],focusAnim=null;
 let timer=0,tick=null,started=false,won=false;
 let particles=[],doneSet=new Set(),coreEnergy=0,winFlash=0,corePulse=0;
 let KEYIN=null,lastTouch=false;
+const touchDevice=("ontouchstart" in window)||((navigator.maxTouchPoints||0)>0);
 const $=id=>document.getElementById(id);
 function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 
 /* ---------- new puzzle ---------- */
+function mkKey(label,val){const k=document.createElement("div");k.className="key"+(val==="bk"?" wide":"");k.textContent=label;
+  k.addEventListener("pointerdown",e=>{e.preventDefault();if(val==="bk")backspace();else typeLetter(val);});return k;}
+function buildKbd(){const host=$("kbd");if(!host||host.dataset.built)return;host.dataset.built="1";
+  ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"].forEach((r,ri)=>{const row=document.createElement("div");row.className="krow";
+    for(const ch of r)row.appendChild(mkKey(ch,ch));if(ri===2)row.appendChild(mkKey("⌫","bk"));host.appendChild(row);});}
+function showKbd(){buildKbd();const h=$("kbd");if(h){h.classList.add("show");document.body.classList.add("kbdopen");}}
+function hideKbd(){const h=$("kbd");if(h){h.classList.remove("show");document.body.classList.remove("kbdopen");}}
 function newPuzzle(){
   won=false;started=false;clearInterval(tick);timer=0;$("timer").textContent="0:00";
   particles=[];doneSet=new Set();coreEnergy=0;winFlash=0;
@@ -462,7 +479,7 @@ function newPuzzle(){
     sel={word:P.edges[0],cellIdx:0};
     view.yaw=0.6;view.pitch=-0.5;view.auto=true;view.idle=0;
     buildClues();updateHud();$("spinner").classList.remove("show");
-    focusWord(P.edges[0],false);resize();
+    focusWord(P.edges[0],false);resize();if(touchDevice)showKbd();
   },40);
 }
 
@@ -695,7 +712,9 @@ function focusWord(w,animate=true){const m=wordCentroid(w);const n=Math.hypot(m[
 function firstEmpty(w){const i=w.cells.findIndex(c=>!getCur(P,c));return i<0?0:i;}
 function setSel(w,idx){sel={word:w,cellIdx:idx};const e=w;$("curNum").textContent=e.num;$("curClue").textContent=e.clue+" ("+e.len+")";
   document.querySelectorAll("#clueList li").forEach(li=>li.classList.toggle("sel",li.dataset.id===w.layer+w.num));
-  const li=document.querySelector(`#clueList li[data-id="${w.layer+w.num}"]`);if(li)li.scrollIntoView({block:"nearest"});view.idle=0;}
+  const li=document.querySelector(`#clueList li[data-id="${w.layer+w.num}"]`);const ul=$("clueList");
+  if(li&&ul){const lr=li.getBoundingClientRect(),ur=ul.getBoundingClientRect();if(lr.top<ur.top)ul.scrollTop+=lr.top-ur.top-4;else if(lr.bottom>ur.bottom)ul.scrollTop+=lr.bottom-ur.bottom+4;}
+  view.idle=0;}
 function onDown(x,y){view.drag=true;view.moved=0;view.lastX=x;view.lastY=y;view.auto=false;}
 function onMove(x,y){if(!view.drag)return;const dx=x-view.lastX,dy=y-view.lastY;view.moved+=Math.abs(dx)+Math.abs(dy);
   view.yaw+=dx*0.008;view.pitch+=dy*0.008;view.pitch=Math.max(-1.4,Math.min(1.4,view.pitch));view.lastX=x;view.lastY=y;view.idle=0;focusAnim=null;}
@@ -707,7 +726,7 @@ function hit(x,y){let best=null,bd=1e9;for(const pc of projCells){const d=Math.h
   let cand=null,ci=0;
   if(sel.word&&selectable(sel.word)){const i=sel.word.cells.findIndex(c=>cellEq(c,best.c));if(i>=0){cand=sel.word;ci=i;}}
   if(!cand){for(const w of selectableList()){const i=w.cells.findIndex(c=>cellEq(c,best.c));if(i>=0){cand=w;ci=i;break;}}}
-  if(cand){setSel(cand,ci);if(lastTouch&&KEYIN){try{KEYIN.focus({preventScroll:true});}catch(_e){KEYIN.focus();}}}
+  if(cand)setSel(cand,ci);
 }
 function typeLetter(ch){if(!sel.word||!selectable(sel.word))return;setCur(P,sel.word.cells[sel.cellIdx],ch);
   sel.cellIdx=Math.min(sel.cellIdx+1,sel.word.cells.length-1);updateClues();markStart();if(solved(P))winNow();}
@@ -743,7 +762,7 @@ function revealCorner(){const v=P.vertices.find(v=>v.cur!==v.sol);if(v){v.cur=v.
 function reveal(){if(!confirm("Reveal everything? (skips the dig)"))return;for(const w of [...P.edges,...P.faceWords,...P.spokeWords])for(const c of w.cells)setCur(P,c,c.letter);updateClues();winNow();}
 
 /* ---------- win / prize ---------- */
-function winNow(){if(won)return;won=true;clearInterval(tick);view.auto=true;view.idle=999;
+function winNow(){if(won)return;won=true;clearInterval(tick);view.auto=true;view.idle=999;hideKbd();
   store.size=sizeName;store["best_"+sizeName]=Math.min(store["best_"+sizeName]||1e9,timer);persist();confetti();
   setTimeout(()=>{
     $("card").innerHTML=`<h2>You reached the center</h2>
@@ -818,7 +837,7 @@ const MOODS=[
  {label:"Surprise me", words:null,                                line:"As you wish. Something is already circling."}
 ];
 let MOODFILTER=null;
-function showTutorial(reopen){
+function showTutorial(reopen){hideKbd();
   $("tutCard").innerHTML='<div class="tutk">how to play</div><h2>RUMI 3D</h2>'+
     '<p class="tutintro">Every edge of the solid is a word. Every glowing corner is one letter, shared by all the words that meet there — a crossword wrapped around a shape you can spin.</p>'+
     '<ul class="tutsteps">'+
@@ -834,7 +853,7 @@ function showTutorial(reopen){
 }
 function startFromTutorial(){store.seenTutorial=true;persist();$("tutOverlay").classList.remove("show");showIntro();}
 function closeTutorial(){$("tutOverlay").classList.remove("show");}
-function showIntro(){const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
+function showIntro(){hideKbd();const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
   const ln=$("introLine");if(ln)ln.textContent="";$("introOverlay").classList.add("show");}
 function pickMood(m){MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textContent=m.line;
   document.querySelectorAll("#moodBtns .moodbtn").forEach(b=>b.disabled=true);
