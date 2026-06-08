@@ -785,7 +785,7 @@ function tipHTML(){if(!TIP_URL||store.supported)return "";
     '<button class="btn" onclick="markSupported()">Hide this</button></div></div>';}
 function markSupported(){store.supported=true;persist();const b=document.querySelector(".tipbox");if(b)b.style.display="none";}
 function shareGame(btn){const word=(typeof P!=="undefined"&&P&&P.coreWord)?P.coreWord:"the center";
-  const text="I reached the center of RUMI 3D — "+word+" · "+fmt(timer);const url="https://bandittfb.github.io/RUMI3D/";
+  const text="I reached the center of RUMI 3D — "+word+" · "+fmt(timer);const url="https://rumi3d.org/";
   if(navigator.share){navigator.share({title:"RUMI 3D",text:text,url:url}).catch(()=>{});}
   else if(navigator.clipboard){navigator.clipboard.writeText(text+"  "+url).then(()=>{if(btn){const o=btn.textContent;btn.textContent="Link copied ✓";setTimeout(()=>{btn.textContent=o;},1600);}}).catch(()=>{});}}
 
