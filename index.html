@@ -108,6 +108,9 @@
 
   .card .reveal{font-size:30px;font-weight:800;letter-spacing:6px;color:var(--gold);margin:6px 0}
   .card .kind{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  .card .tipbox{margin-top:15px;border-top:1px solid var(--line);padding-top:13px}
+  .card .tipbox p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 10px}
+  .card .tipbox a.btn{background:linear-gradient(135deg,#ffd166,#f7a325);color:#1a1300;border:none;text-decoration:none;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
@@ -415,6 +418,10 @@ const SIZES={
   icosa:{label:"Icosa",sub:"edges 30 · faces 20",words:30}
 };
 const SAVE="rumi3d_v3";
+/* ===== Tips: paste your tip link below (Ko-fi, GitHub Sponsors, Buy Me a Coffee, PayPal.me, Stripe...).
+   Leave it as "" to hide the tip prompt entirely. Once a player taps "Leave a tip" or "Hide this",
+   it's remembered in their browser and never shown to them again (no login needed). ===== */
+const TIP_URL="";
 let store=load();function load(){try{return JSON.parse(localStorage.getItem(SAVE))||{};}catch(e){return {};}}
 function persist(){localStorage.setItem(SAVE,JSON.stringify(store));}
 
@@ -731,10 +738,21 @@ function winNow(){if(won)return;won=true;clearInterval(tick);view.auto=true;view
       <div class="poem">${((P.payoff||{}).text||"").replace(/\n/g,"<br>")}</div>
       <div class="row" style="margin-top:16px">
         <button class="btn" onclick="document.getElementById('overlay').classList.remove('show')">Stay a while</button>
-        <button class="btn primary" onclick="nextFromWin()">New solid →</button></div>`;
+        <button class="btn" onclick="shareGame(this)">Share</button>
+        <button class="btn primary" onclick="nextFromWin()">New solid →</button></div>
+      ${tipHTML()}`;
     $("overlay").classList.add("show");
   },1100);}
 function nextFromWin(){$("overlay").classList.remove("show");showIntro();}
+function tipHTML(){if(!TIP_URL||store.supported)return "";
+  return '<div class="tipbox"><p>I made this for the love of it — I hope it gave you something. If you\'d like to say thanks, you can leave a tip. Completely optional. 💜</p>'+
+    '<div class="row"><a class="btn" href="'+TIP_URL+'" target="_blank" rel="noopener" onclick="markSupported()">Leave a tip 💜</a>'+
+    '<button class="btn" onclick="markSupported()">Hide this</button></div></div>';}
+function markSupported(){store.supported=true;persist();const b=document.querySelector(".tipbox");if(b)b.style.display="none";}
+function shareGame(btn){const word=(typeof P!=="undefined"&&P&&P.coreWord)?P.coreWord:"the center";
+  const text="I reached the center of RUMI 3D — "+word+" · "+fmt(timer);const url="https://bandittfb.github.io/RUMI3D/";
+  if(navigator.share){navigator.share({title:"RUMI 3D",text:text,url:url}).catch(()=>{});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(text+"  "+url).then(()=>{if(btn){const o=btn.textContent;btn.textContent="Link copied ✓";setTimeout(()=>{btn.textContent=o;},1600);}}).catch(()=>{});}}
 
 /* ---------- hud / controls ---------- */
 function updateHud(){$("sizePill").textContent=SIZES[sizeName].label+" · "+SIZES[sizeName].sub;updateClues();}
