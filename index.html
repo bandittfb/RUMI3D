@@ -376,22 +376,32 @@ function extendPuzzle(P){
   const findPair=(la,lb)=>{const list=_shuf(byPair[[la,lb].sort().join('')]||[]);for(const w of list)if(!used.has(w.word)){used.add(w.word);return w;}return null;};
   const findAny=()=>{for(const w of bset())if(!used.has(w.word)){used.add(w.word);return w;}return null;};
   const findCore=(X)=>{for(const w of bset()){if(used.has(w.word))continue;if(w.word[w.word.length-1]===X){used.add(w.word);return w;}}return null;};
+  // Face words must connect on BOTH ends to real cells — a corner, or a letter on one of the
+  // face's edges (the word "strings from the edges"). No floating phantom endpoints.
+  const _ek=(a,b)=>Math.min(a,b)+"_"+Math.max(a,b);
+  const _edgeByPair={};P.edges.forEach(e=>{_edgeByPair[_ek(e.from,e.to)]=e;});
+  const faceAnchors=(f)=>{const A=[];
+    f.forEach(vi=>A.push({letter:P.vertices[vi].sol,mk:{kind:'v',v:vi},p3:V[vi],group:'v'+vi}));
+    [[f[0],f[1]],[f[1],f[2]],[f[0],f[2]]].forEach(pr=>{const e=_edgeByPair[_ek(pr[0],pr[1])];if(!e)return;
+      e.cells.forEach(c=>{if(c.kind==='i')A.push({letter:c.letter,mk:{kind:'i',key:c.key},p3:c.p3,group:'e'+e.ei});});});
+    return A;};
+  const _facePairs=(X,Y)=>{const out=[];for(const a of X)for(const b of Y){if(a===b||a.group===b.group)continue;out.push([a,b]);}return _shuf(out);};
+  const findFaceWord=(an)=>{const cor=an.filter(x=>x.group[0]==='v'),edg=an.filter(x=>x.group[0]==='e');
+    for(const tier of [_facePairs(cor,cor),_facePairs(cor,edg),_facePairs(edg,edg)])
+      for(const [a,b] of tier){const w=findPair(a.letter,b.letter);
+        if(w){let A=a,B=b;if(w.word[0]!==a.letter){A=b;B=a;}return {word:w.word,clue:w.clue,A,B};}}
+    return null;};
   P.faceWords=F.map((f,fi)=>{
-    const G=cen(f);const La=P.vertices[f[0]].sol,Lb=P.vertices[f[1]].sol,Lc=P.vertices[f[2]].sol;
-    const opts=_shuf([[f[0],f[2],La,Lc],[f[0],f[1],La,Lb],[f[1],f[2],Lb,Lc]]);
-    let pick=null,from=null,to=null;
-    for(const [s2,t2,ls,lt] of opts){const w=findPair(ls,lt);if(w){pick=w;from=s2;to=t2;if(w.word[0]!==P.vertices[s2].sol){from=t2;to=s2;}break;}}
-    let cells=[],fallback=false,word,clue;
-    if(pick){word=pick.word;clue=pick.clue;const A=V[from],C=V[to],L=word.length;
+    const G=cen(f);const built=findFaceWord(faceAnchors(f));
+    let cells=[],word,clue,connected;
+    if(built){connected=true;word=built.word;clue=built.clue;const A=built.A.p3,C=built.B.p3,L=word.length;
       for(let k=0;k<L;k++){const t=k/(L-1);const base=lerp(A,C,t);const p3=lerp(base,G,0.42*Math.sin(Math.PI*t));
-        if(k===0)cells.push({kind:'v',v:from,p3:A,letter:word[k]});
-        else if(k===L-1)cells.push({kind:'v',v:to,p3:C,letter:word[k]});
+        if(k===0)cells.push(Object.assign({},built.A.mk,{p3:A,letter:word[0]}));
+        else if(k===L-1)cells.push(Object.assign({},built.B.mk,{p3:C,letter:word[L-1]}));
         else cells.push({kind:'fc',key:'F'+fi+'_'+k,p3,letter:word[k]});}
-    }else{const w=findAny();fallback=true;word=w.word;clue=w.clue;
-      const A=lerp(V[f[0]],V[f[1]],0.5),C=lerp(V[f[1]],V[f[2]],0.5),L=word.length;
-      for(let k=0;k<L;k++){const t=k/(L-1);const base=lerp(A,C,t);const p3=lerp(base,G,0.3*Math.sin(Math.PI*t));
-        cells.push({kind:'fc',key:'F'+fi+'_'+k,p3,letter:word[k]});}}
-    return {layer:'face',face:fi,word,clue,len:word.length,cells,fallback,num:'F'+(fi+1)};
+    }else{connected=false;const La=P.vertices[f[0]].sol,Lc=P.vertices[f[2]].sol;word=La+Lc;clue="(corner link)";
+      cells.push({kind:'v',v:f[0],p3:V[f[0]],letter:La});cells.push({kind:'v',v:f[2],p3:V[f[2]],letter:Lc});}
+    return {layer:'face',face:fi,word,clue,len:word.length,cells,fallback:!connected,connected,num:'F'+(fi+1)};
   });
   // choose the center letter to maximise how many corner->center words exist
   const cornerSet=new Set(P.vertices.map(v=>v.sol));
