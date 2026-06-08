@@ -78,7 +78,7 @@
   #scene{touch-action:none;-webkit-user-select:none;user-select:none}
   .zoomctl button{touch-action:manipulation}
   @media(max-width:760px){
-    main{flex-direction:column;flex-wrap:nowrap;padding:10px;gap:12px}
+    main{flex-direction:column;flex-wrap:nowrap;align-items:stretch;padding:10px;gap:12px}
     .left{min-width:0;max-width:100%;width:100%}
     .side{width:100%;max-width:100%}
     .left,.side{display:contents}
@@ -132,7 +132,8 @@
   .kbd .key{flex:1;max-width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:16px;font-weight:600;user-select:none;-webkit-user-select:none;cursor:pointer;touch-action:manipulation}
   .kbd .key:active{background:var(--spine);color:#fff;border-color:var(--spine)}
   .kbd .key.wide{max-width:66px;font-size:18px}
-  body.kbdopen{padding-bottom:172px}
+  .kbd .key.spacebar{max-width:none;flex:1;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+  body.kbdopen{padding-bottom:212px}
   @media(min-width:761px){.kbd{display:none!important}body.kbdopen{padding-bottom:0}}
 </style>
 </head>
@@ -467,11 +468,12 @@ const $=id=>document.getElementById(id);
 function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 
 /* ---------- new puzzle ---------- */
-function mkKey(label,val){const k=document.createElement("div");k.className="key"+(val==="bk"?" wide":"");k.textContent=label;
-  k.addEventListener("pointerdown",e=>{e.preventDefault();if(val==="bk")backspace();else typeLetter(val);});return k;}
+function mkKey(label,val){const k=document.createElement("div");k.className="key"+(val==="bk"?" wide":"")+(val==="sp"?" spacebar":"");k.textContent=label;
+  k.addEventListener("pointerdown",e=>{e.preventDefault();if(val==="bk")backspace();else if(val==="sp"){if(sel.word)focusWord(sel.word);}else typeLetter(val);});return k;}
 function buildKbd(){const host=$("kbd");if(!host||host.dataset.built)return;host.dataset.built="1";
   ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"].forEach((r,ri)=>{const row=document.createElement("div");row.className="krow";
-    for(const ch of r)row.appendChild(mkKey(ch,ch));if(ri===2)row.appendChild(mkKey("⌫","bk"));host.appendChild(row);});}
+    for(const ch of r)row.appendChild(mkKey(ch,ch));if(ri===2)row.appendChild(mkKey("⌫","bk"));host.appendChild(row);});
+  const r4=document.createElement("div");r4.className="krow";r4.appendChild(mkKey("space","sp"));host.appendChild(r4);}
 function showKbd(){buildKbd();const h=$("kbd");if(h){h.classList.add("show");document.body.classList.add("kbdopen");}}
 function hideKbd(){const h=$("kbd");if(h){h.classList.remove("show");document.body.classList.remove("kbdopen");}}
 function newPuzzle(){
