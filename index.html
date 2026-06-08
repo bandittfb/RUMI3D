@@ -369,7 +369,10 @@ function extendPuzzle(P){
   // choose the center letter to maximise how many corner->center words exist
   const cornerSet=new Set(P.vertices.map(v=>v.sol));
   const endCnt={};for(const e of BANK){if(cornerSet.has(e.word[0]))endCnt[e.word[e.word.length-1]]=(endCnt[e.word[e.word.length-1]]||0)+1;}
-  let X='E',bc=-1;for(const k in endCnt)if(endCnt[k]>bc){bc=endCnt[k];X=k;}
+  const _need=Math.max(3,Math.ceil(P.solid.F.length*0.6));
+  let _cands=Object.keys(endCnt).filter(k=>endCnt[k]>=_need);if(!_cands.length)_cands=Object.keys(endCnt);
+  let _tot=_cands.reduce((s,k)=>s+endCnt[k],0),_r=Math.random()*_tot,X=_cands[0]||'E';
+  for(const k of _cands){_r-=endCnt[k];if(_r<=0){X=k;break;}}
   P.coreLetter=X;
   const findSE=(a,b)=>{for(const w of bset()){if(used.has(w.word))continue;if(w.word[0]===a&&w.word[w.word.length-1]===b){used.add(w.word);return w;}}return null;};
   const qbez=(A,Cc,O,t)=>{const u=1-t;return [u*u*A[0]+2*u*t*Cc[0]+t*t*O[0],u*u*A[1]+2*u*t*Cc[1]+t*t*O[1],u*u*A[2]+2*u*t*Cc[2]+t*t*O[2]];};
@@ -432,6 +435,7 @@ let sel={word:null,cellIdx:0};
 let projCells=[],focusAnim=null;
 let timer=0,tick=null,started=false,won=false;
 let particles=[],doneSet=new Set(),coreEnergy=0,winFlash=0,corePulse=0;
+let KEYIN=null,lastTouch=false;
 const $=id=>document.getElementById(id);
 function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 
@@ -691,7 +695,7 @@ function hit(x,y){let best=null,bd=1e9;for(const pc of projCells){const d=Math.h
   let cand=null,ci=0;
   if(sel.word&&selectable(sel.word)){const i=sel.word.cells.findIndex(c=>cellEq(c,best.c));if(i>=0){cand=sel.word;ci=i;}}
   if(!cand){for(const w of selectableList()){const i=w.cells.findIndex(c=>cellEq(c,best.c));if(i>=0){cand=w;ci=i;break;}}}
-  if(cand)setSel(cand,ci);
+  if(cand){setSel(cand,ci);if(lastTouch&&KEYIN){try{KEYIN.focus({preventScroll:true});}catch(_e){KEYIN.focus();}}}
 }
 function typeLetter(ch){if(!sel.word||!selectable(sel.word))return;setCur(P,sel.word.cells[sel.cellIdx],ch);
   sel.cellIdx=Math.min(sel.cellIdx+1,sel.word.cells.length-1);updateClues();markStart();if(solved(P))winNow();}
@@ -763,11 +767,11 @@ function buildControls(){const s=$("sizeSel");s.innerHTML="";
   const zi=$("btnZoomIn"),zo=$("btnZoomOut");if(zi)zi.onclick=()=>setZoom(view.zoom*1.15);if(zo)zo.onclick=()=>setZoom(view.zoom*0.87);
   const bi=$("btnIntent");if(bi)bi.onclick=showIntro;}
 function wireCanvas(){
-  cv.addEventListener("mousedown",e=>{const r=cv.getBoundingClientRect();onDown(e.clientX-r.left,e.clientY-r.top);});
+  cv.addEventListener("mousedown",e=>{lastTouch=false;const r=cv.getBoundingClientRect();onDown(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener("mousemove",e=>{const r=cv.getBoundingClientRect();onMove(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener("mouseup",e=>{const r=cv.getBoundingClientRect();onUp(e.clientX-r.left,e.clientY-r.top);});
   let _pinch=null;const _td=e=>{const a=e.touches[0],b=e.touches[1];return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);};
-  cv.addEventListener("touchstart",e=>{const r=cv.getBoundingClientRect();
+  cv.addEventListener("touchstart",e=>{lastTouch=true;const r=cv.getBoundingClientRect();
     if(e.touches.length>=2){_pinch=_td(e);}else{const t=e.touches[0];onDown(t.clientX-r.left,t.clientY-r.top);}e.preventDefault();},{passive:false});
   cv.addEventListener("touchmove",e=>{const r=cv.getBoundingClientRect();
     if(e.touches.length>=2&&_pinch){const d=_td(e);if(d>0){setZoom(view.zoom*(d/_pinch));_pinch=d;}}
@@ -777,6 +781,7 @@ function wireCanvas(){
 function setZoom(z){view.zoom=Math.max(0.5,Math.min(3,z));view.idle=0;}
 document.addEventListener("keydown",e=>{
   if($("overlay").classList.contains("show")){if(e.key==="Enter")nextFromWin();return;}
+  if(document.activeElement&&document.activeElement.id==="rumiKeyIn")return;
   if(/^[a-zA-Z]$/.test(e.key)){typeLetter(e.key.toUpperCase());e.preventDefault();}
   else if(e.key==="Backspace"){backspace();e.preventDefault();}
   else if(e.key==="ArrowRight"){moveCell(1);e.preventDefault();}
@@ -806,7 +811,14 @@ function pickMood(m){MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textCon
   document.querySelectorAll("#moodBtns .moodbtn").forEach(b=>b.disabled=true);
   setTimeout(()=>{$("introOverlay").classList.remove("show");newPuzzle();},950);}
 
-function boot(){if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}}cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();showIntro();}
+function boot(){if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}}
+  KEYIN=document.createElement("input");KEYIN.id="rumiKeyIn";KEYIN.type="text";KEYIN.tabIndex=-1;
+  KEYIN.setAttribute("autocomplete","off");KEYIN.setAttribute("autocorrect","off");KEYIN.setAttribute("autocapitalize","characters");KEYIN.setAttribute("spellcheck","false");KEYIN.setAttribute("inputmode","text");KEYIN.setAttribute("aria-hidden","true");
+  KEYIN.style.cssText="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:0;padding:0;margin:0;font-size:16px;background:transparent;color:transparent;caret-color:transparent;z-index:-1";
+  document.body.appendChild(KEYIN);
+  KEYIN.addEventListener("input",function(){const v=KEYIN.value,ch=v.slice(-1);if(/[a-zA-Z]/.test(ch))typeLetter(ch.toUpperCase());KEYIN.value="";});
+  KEYIN.addEventListener("keydown",function(e){if(e.key==="Backspace"){backspace();e.preventDefault();}});
+  cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();showIntro();}
 boot();
 
 
