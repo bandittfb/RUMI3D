@@ -139,6 +139,13 @@
   .tutcard .tutinstall{font-size:12.5px;color:var(--ink);background:rgba(124,92,255,.10);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 14px;line-height:1.5}
   .tutcard .tutinstall b{color:var(--ink)}
   .tutcard .btn.primary{width:100%}
+  .dailycard{border:1px solid var(--line);background:linear-gradient(135deg,rgba(124,92,255,.16),rgba(76,201,240,.07));border-radius:14px;padding:15px 16px 17px;text-align:center}
+  .dailycard .dhead{font-size:11.5px;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);margin-bottom:9px}
+  .dailycard .dsub{color:var(--muted);font-size:14px;margin:0 0 14px}
+  .dailycard .dsub b{color:var(--ink)}
+  .dailycard .dsolved{color:var(--ink);font-size:16px;font-weight:600;margin-bottom:2px}
+  .dailycard .dbig{width:100%;font-size:16px;padding:14px}
+  .dailycard .dstreak{margin-top:12px;font-size:13px;color:var(--gold);font-weight:700}
   .kbd{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;flex-direction:column;gap:5px;padding:6px 5px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(12,16,28,.97);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.45)}
   .kbd.show{display:flex}
   .kbd .krow{display:flex;gap:4px;justify-content:center}
@@ -193,7 +200,8 @@
 <footer>Every edge of the solid is a word; every glowing corner is a single letter shared by all the words that meet there. Solve one word and its corners hand letters to its neighbors — across the surface of a 3D shape you can spin.</footer>
 <div class="overlay" id="tutOverlay"><div class="card tutcard" id="tutCard"></div></div>
 <div class="overlay" id="introOverlay"><div class="card introcard">
-  <div class="introk">before the solid forms</div>
+  <div id="dailyBlock"></div>
+  <div class="introk" style="margin-top:18px">or free play —</div>
   <h2>What are you bringing to the center?</h2>
   <div class="moods" id="moodBtns"></div>
   <div class="introline" id="introLine"></div>
@@ -328,7 +336,14 @@ function makeSolid(name){
   V=V.map(p=>[p[0]/mx*1.4,p[1]/mx*1.4,p[2]/mx*1.4]);
   return {V,E,F,name};
 }
-function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+/* ---- seeded RNG (daily puzzle is deterministic; practice is random) ---- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+let RNG=Math.random;
+function _dayKey(d){d=d||new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+function _hseed(n){n=n>>>0;n=Math.imul(n^(n>>>16),0x45d9f3b);n=Math.imul(n^(n>>>16),0x45d9f3b);return (n^(n>>>16))>>>0;}
+const DAILY_SHAPES=["tetra","hexa","octa","octa","deca"];
+function dailyShapeForSeed(s){return DAILY_SHAPES[s%DAILY_SHAPES.length];}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(RNG()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 function bfsEdgeOrder(nV,E){const adj=Array.from({length:nV},()=>[]);E.forEach(([a,b],i)=>{adj[a].push([b,i]);adj[b].push([a,i]);});
   const sE=new Set(),order=[],sV=new Set([0]),q=[0];
   while(q.length){const v=q.shift();for(const[w,ei]of adj[v]){if(!sE.has(ei)){sE.add(ei);order.push(ei);}if(!sV.has(w)){sV.add(w);q.push(w);}}}
@@ -388,7 +403,7 @@ function wordDone(p,w){return w.cells.every(c=>getCur(p,c)===c.letter);}
 function solved(p){for(const w of allWords(p))for(const c of w.cells)if(getCur(p,c)!==c.letter)return false;return true;}
 
 function allWords(p){return [...p.edges,...(p.faceWords||[]),...(p.spokeWords||[])];}
-function _shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function _shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(RNG()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 function _coreLetter(){const cnt={};for(const e of BANK){const l=e.word[e.word.length-1];cnt[l]=(cnt[l]||0)+1;}let best='E',bc=0;for(const k in cnt)if(cnt[k]>bc){bc=cnt[k];best=k;}return best;}
 
 const PAYOFFS=[
@@ -429,7 +444,7 @@ function extendPuzzle(P){
   const used=new Set(P.edges.map(e=>e.word));
   const _mf=(typeof MOODFILTER!=='undefined'&&MOODFILTER)?PAYOFFS.filter(p=>MOODFILTER.indexOf(p.word)>=0):PAYOFFS;
   const _pool=_mf.length?_mf:PAYOFFS;
-  const payoff=_pool[(Math.random()*_pool.length)|0];P.payoff=payoff;P.coreWord=payoff.word;
+  const payoff=_pool[(RNG()*_pool.length)|0];P.payoff=payoff;P.coreWord=payoff.word;
   const prefer=new Set(payoff.near||[]);
   const bset=()=>{const a=_shuf(BANK);a.sort((x,y)=>(prefer.has(y.word)?1:0)-(prefer.has(x.word)?1:0));return a;};
   const byPair={};for(const e of BANK){const k=[e.word[0],e.word[e.word.length-1]].sort().join('');(byPair[k]=byPair[k]||[]).push(e);}
@@ -468,7 +483,7 @@ function extendPuzzle(P){
   const endCnt={};for(const e of BANK){if(cornerSet.has(e.word[0]))endCnt[e.word[e.word.length-1]]=(endCnt[e.word[e.word.length-1]]||0)+1;}
   const _need=Math.max(3,Math.ceil(P.solid.F.length*0.6));
   let _cands=Object.keys(endCnt).filter(k=>endCnt[k]>=_need);if(!_cands.length)_cands=Object.keys(endCnt);
-  let _tot=_cands.reduce((s,k)=>s+endCnt[k],0),_r=Math.random()*_tot,X=_cands[0]||'E';
+  let _tot=_cands.reduce((s,k)=>s+endCnt[k],0),_r=RNG()*_tot,X=_cands[0]||'E';
   for(const k of _cands){_r-=endCnt[k];if(_r<=0){X=k;break;}}
   P.coreLetter=X;
   const findSE=(a,b)=>{for(const w of bset()){if(used.has(w.word))continue;if(w.word[0]===a&&w.word[w.word.length-1]===b){used.add(w.word);return w;}}return null;};
@@ -531,6 +546,7 @@ let view={yaw:0.6,pitch:-0.5,auto:true,drag:false,lastX:0,lastY:0,moved:0,idle:0
 let sel={word:null,cellIdx:0};
 let projCells=[],focusAnim=null;
 let timer=0,tick=null,started=false,won=false;
+let mode="practice",dailyKey=null,dailySeed=null;
 let particles=[],doneSet=new Set(),coreEnergy=0,winFlash=0,corePulse=0;
 let KEYIN=null,lastTouch=false;
 const touchDevice=("ontouchstart" in window)||((navigator.maxTouchPoints||0)>0);
@@ -551,8 +567,10 @@ function newPuzzle(){
   particles=[];doneSet=new Set();coreEnergy=0;winFlash=0;
   $("spinner").classList.add("show");
   setTimeout(()=>{
+    RNG=(mode==="daily")?mulberry32(dailySeed):Math.random;
     let p=null,g=0;do{p=buildPuzzle(sizeName);g++;}while(!p&&g<4);
     P=p||buildPuzzle("octa");extendPuzzle(P);precompute(P);
+    RNG=Math.random;
     sel={word:P.edges[0],cellIdx:0};
     view.yaw=0.6;view.pitch=-0.5;view.auto=true;view.idle=0;
     buildClues();updateHud();$("spinner").classList.remove("show");
@@ -840,18 +858,23 @@ function reveal(){if(!confirm("Reveal everything? (skips the dig)"))return;for(c
 
 /* ---------- win / prize ---------- */
 function winNow(){if(won)return;won=true;clearInterval(tick);view.auto=true;view.idle=999;hideKbd();
-  store.size=sizeName;store["best_"+sizeName]=Math.min(store["best_"+sizeName]||1e9,timer);persist();confetti();
+  store.size=sizeName;store["best_"+sizeName]=Math.min(store["best_"+sizeName]||1e9,timer);
+  const isD=mode==="daily";if(isD)recordDaily();persist();confetti();
   setTimeout(()=>{
+    const badge=isD?`<p class="s2" style="color:var(--cyan)">◆ Daily · ${dailyDateStr(dailyKey)}${(store.streak>1?` · 🔥 ${store.streak}-day streak`:"")}</p>`:"";
+    const shareBtn=isD?`<button class="btn" onclick="shareDaily(this)">Share result</button>`:`<button class="btn" onclick="shareGame(this)">Share</button>`;
+    const nextBtn=isD?`<button class="btn primary" onclick="nextFromWin()">Done →</button>`:`<button class="btn primary" onclick="nextFromWin()">New solid →</button>`;
     $("card").innerHTML=`<h2>You reached the center</h2>
       <p class="s2">${SIZES[sizeName].label} · ${P.edges.length+P.faceWords.length+P.spokeWords.length} words · ${fmt(timer)}</p>
+      ${badge}
       <p class="s2">the words were all circling -</p>
       <div class="reveal">${(P.payoff||{}).word||P.coreWord||""}</div>
       <p class="kind">${(P.payoff||{}).kind||""}</p>
       <div class="poem">${((P.payoff||{}).text||"").replace(/\n/g,"<br>")}</div>
       <div class="row" style="margin-top:16px">
         <button class="btn" onclick="document.getElementById('overlay').classList.remove('show')">Stay a while</button>
-        <button class="btn" onclick="shareGame(this)">Share</button>
-        <button class="btn primary" onclick="nextFromWin()">New solid →</button></div>
+        ${shareBtn}
+        ${nextBtn}</div>
       ${tipHTML()}`;
     $("overlay").classList.add("show");
   },1100);}
@@ -870,8 +893,8 @@ function shareGame(btn){const word=(typeof P!=="undefined"&&P&&P.coreWord)?P.cor
 function updateHud(){$("sizePill").textContent=SIZES[sizeName].label+" · "+SIZES[sizeName].sub;updateClues();}
 function buildControls(){const s=$("sizeSel");s.innerHTML="";
   Object.keys(SIZES).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=SIZES[k].label+" — "+SIZES[k].words+" edges";s.appendChild(o);});
-  s.value=sizeName;s.addEventListener("change",()=>{sizeName=s.value;store.size=sizeName;persist();newPuzzle();});
-  $("btnNew").onclick=newPuzzle;$("btnCheck").onclick=check;$("btnHint").onclick=hint;$("btnCorner").onclick=revealCorner;$("btnReveal").onclick=reveal;
+  s.value=sizeName;s.addEventListener("change",()=>{sizeName=s.value;store.size=sizeName;persist();mode="practice";newPuzzle();});
+  $("btnNew").onclick=()=>{mode="practice";newPuzzle();};$("btnCheck").onclick=check;$("btnHint").onclick=hint;$("btnCorner").onclick=revealCorner;$("btnReveal").onclick=reveal;
   const zi=$("btnZoomIn"),zo=$("btnZoomOut");if(zi)zi.onclick=()=>setZoom(view.zoom*1.15);if(zo)zo.onclick=()=>setZoom(view.zoom*0.87);
   const bi=$("btnIntent");if(bi)bi.onclick=showIntro;
   const bh=$("btnHelp");if(bh)bh.onclick=()=>showTutorial(true);}
@@ -931,11 +954,38 @@ function showTutorial(reopen){hideKbd();
 }
 function startFromTutorial(){store.seenTutorial=true;persist();$("tutOverlay").classList.remove("show");showIntro();}
 function closeTutorial(){$("tutOverlay").classList.remove("show");}
-function showIntro(){hideKbd();const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
+function showIntro(){hideKbd();renderDailyBlock();const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
   const ln=$("introLine");if(ln)ln.textContent="";$("introOverlay").classList.add("show");}
-function pickMood(m){MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textContent=m.line;
+function pickMood(m){mode="practice";MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textContent=m.line;
   document.querySelectorAll("#moodBtns .moodbtn").forEach(b=>b.disabled=true);
   setTimeout(()=>{$("introOverlay").classList.remove("show");newPuzzle();},950);}
+
+/* ---------- daily puzzle ---------- */
+function todaySeed(){const k=_dayKey();const s=_hseed(k);return {key:k,seed:s,shape:dailyShapeForSeed(s)};}
+function dailyDateStr(k){const y=Math.floor(k/10000),m=Math.floor(k/100)%100,d=k%100;
+  const mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]||m;return mo+" "+d+", "+y;}
+function startDaily(){const t=todaySeed();mode="daily";dailyKey=t.key;dailySeed=t.seed;sizeName=t.shape;MOODFILTER=null;
+  const ss=$("sizeSel");if(ss)ss.value=sizeName;store.size=sizeName;
+  $("introOverlay").classList.remove("show");newPuzzle();}
+function recordDaily(){if(!dailyKey)return;store.daily=store.daily||{};const prev=store.daily[dailyKey];
+  if(!prev){const y=_dayKey(new Date(Date.now()-86400000));store.streak=(store.lastDailyKey===y?(store.streak||0)+1:1);store.lastDailyKey=dailyKey;}
+  const best=prev?Math.min(prev.time,timer):timer;store.daily[dailyKey]={time:best,shape:sizeName,reached:true};persist();}
+function dailyResultText(){const k=dailyKey,d=store.daily&&store.daily[k];if(!d)return "";
+  const sh=SIZES[d.shape]?SIZES[d.shape].label:d.shape;const st=store.streak||1;
+  return "RUMI 3D · "+dailyDateStr(k)+"\n◆ "+sh+"  ·  "+fmt(d.time)+"\n🟦🟪🟨 → ✦ reached the center"+(st>1?"\n🔥 "+st+"-day streak":"")+"\nrumi3d.org";}
+function shareDaily(btn){const text=dailyResultText();
+  if(navigator.share){navigator.share({title:"RUMI 3D",text:text}).catch(()=>{});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>{if(btn){const o=btn.textContent;btn.textContent="Copied ✓";setTimeout(()=>{btn.textContent=o;},1600);}}).catch(()=>{});}}
+function renderDailyBlock(){const el=$("dailyBlock");if(!el)return;const t=todaySeed();
+  const solved=store.daily&&store.daily[t.key];const sh=SIZES[t.shape]?SIZES[t.shape].label:t.shape;const st=store.streak||0;
+  const streakHtml=st>0?('<div class="dstreak">🔥 '+st+'-day streak</div>'):'';
+  if(solved){el.innerHTML='<div class="dailycard"><div class="dhead">◆ Today’s puzzle · '+dailyDateStr(t.key)+'</div>'+
+    '<div class="dsolved">✓ Solved · '+sh+' · '+fmt(solved.time)+'</div>'+
+    '<div class="row" style="justify-content:center;margin-top:6px"><button class="btn" onclick="shareDaily(this)">Share result</button>'+
+    '<button class="btn" onclick="startDaily()">Replay</button></div>'+streakHtml+'</div>';
+  }else{el.innerHTML='<div class="dailycard"><div class="dhead">◆ Today’s puzzle · '+dailyDateStr(t.key)+'</div>'+
+    '<div class="dsub">One solid everyone solves today: <b>'+sh+'</b></div>'+
+    '<button class="btn primary dbig" onclick="startDaily()">Play today’s puzzle →</button>'+streakHtml+'</div>';}}
 
 function boot(){if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").then(function(r){if(r&&r.update)r.update();}).catch(()=>{});if(navigator.serviceWorker.controller)navigator.serviceWorker.addEventListener("controllerchange",function(){if(window.__rr)return;window.__rr=1;location.reload();});}catch(e){}}
   KEYIN=document.createElement("input");KEYIN.id="rumiKeyIn";KEYIN.type="text";KEYIN.tabIndex=-1;
