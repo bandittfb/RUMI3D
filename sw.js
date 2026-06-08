@@ -1,5 +1,6 @@
-/* RUMI 3D service worker — offline cache for the single-page app */
-const CACHE = "rumi3d-v8";
+/* RUMI 3D service worker — network-first for the page (so updates always land),
+   cache-first for static assets, cached fallback when offline. */
+const CACHE = "rumi3d-v9";
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", e => {
@@ -15,14 +16,30 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  if (e.request.method !== "GET") return;
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const isPage = req.mode === "navigate" || req.destination === "document";
+  if (isPage) {
+    // network-first: get the freshest HTML when online, fall back to cache offline
+    e.respondWith(
+      fetch(req)
+        .then(resp => {
+          const copy = resp.clone();
+          caches.open(CACHE).then(c => c.put("index.html", copy));
+          return resp;
+        })
+        .catch(() => caches.match("index.html").then(r => r || caches.match("./")))
+    );
+    return;
+  }
+  // static assets: cache-first, then network (and cache it)
   e.respondWith(
-    caches.match(e.request).then(hit =>
-      hit || fetch(e.request).then(resp => {
+    caches.match(req).then(hit =>
+      hit || fetch(req).then(resp => {
         const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
+        caches.open(CACHE).then(c => c.put(req, copy));
         return resp;
-      }).catch(() => caches.match("index.html"))
+      }).catch(() => hit)
     )
   );
 });

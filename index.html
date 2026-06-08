@@ -861,7 +861,7 @@ function pickMood(m){MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textCon
   document.querySelectorAll("#moodBtns .moodbtn").forEach(b=>b.disabled=true);
   setTimeout(()=>{$("introOverlay").classList.remove("show");newPuzzle();},950);}
 
-function boot(){if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}}
+function boot(){if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").then(function(r){if(r&&r.update)r.update();}).catch(()=>{});if(navigator.serviceWorker.controller)navigator.serviceWorker.addEventListener("controllerchange",function(){if(window.__rr)return;window.__rr=1;location.reload();});}catch(e){}}
   KEYIN=document.createElement("input");KEYIN.id="rumiKeyIn";KEYIN.type="text";KEYIN.tabIndex=-1;
   KEYIN.setAttribute("autocomplete","off");KEYIN.setAttribute("autocorrect","off");KEYIN.setAttribute("autocapitalize","characters");KEYIN.setAttribute("spellcheck","false");KEYIN.setAttribute("inputmode","text");KEYIN.setAttribute("aria-hidden","true");
   KEYIN.style.cssText="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:0;padding:0;margin:0;font-size:16px;background:transparent;color:transparent;caret-color:transparent;z-index:-1";
