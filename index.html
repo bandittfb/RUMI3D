@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RUMI 3D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>RUMI 3D — words on a spinning solid</title>
 <style>
   :root{--bg:#0b0e1a;--panel:#141a2e;--panel2:#1b2340;--ink:#eef1fb;--muted:#8b97bd;--line:#27314f;
@@ -66,6 +73,28 @@
   canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;display:none}
   footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 20px 18px}
   @media(max-width:760px){.scenewrap{height:440px}}
+  /* ---- mobile / touch ---- */
+  html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+  #scene{touch-action:none;-webkit-user-select:none;user-select:none}
+  .zoomctl button{touch-action:manipulation}
+  @media(max-width:760px){
+    main{flex-direction:column;padding:10px;gap:12px}
+    .left{min-width:0;max-width:100%;width:100%}
+    .side{width:100%;max-width:100%}
+    .scenewrap{height:56vh;min-height:320px}
+    header{padding:9px 12px;gap:8px}
+    .brand b{font-size:19px;letter-spacing:3px}
+    .stats{gap:6px}.stat{min-width:56px;padding:6px 9px}
+    .cluebar{min-height:48px}.cluebar .txt{font-size:15px}
+    button.btn{padding:13px 8px;font-size:13px;min-width:62px}
+    #clueList{max-height:42vh}
+    .card{padding:22px 18px;max-width:92vw}
+    .card .reveal{font-size:24px;letter-spacing:4px}
+    .moods{grid-template-columns:1fr 1fr}
+    .moodbtn{padding:16px 10px;font-size:15px}
+    .zoomctl button{width:40px;height:40px;font-size:21px}
+    .hintrot{font-size:10px}
+  }
 
   #clueList li.divider{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 4px 4px;cursor:default;background:none}
   #clueList li.divider:hover{background:none}
@@ -719,9 +748,13 @@ function wireCanvas(){
   cv.addEventListener("mousedown",e=>{const r=cv.getBoundingClientRect();onDown(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener("mousemove",e=>{const r=cv.getBoundingClientRect();onMove(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener("mouseup",e=>{const r=cv.getBoundingClientRect();onUp(e.clientX-r.left,e.clientY-r.top);});
-  cv.addEventListener("touchstart",e=>{const r=cv.getBoundingClientRect(),t=e.touches[0];onDown(t.clientX-r.left,t.clientY-r.top);},{passive:true});
-  cv.addEventListener("touchmove",e=>{const r=cv.getBoundingClientRect(),t=e.touches[0];onMove(t.clientX-r.left,t.clientY-r.top);},{passive:true});
-  cv.addEventListener("touchend",()=>onUp(view.lastX,view.lastY),{passive:true});
+  let _pinch=null;const _td=e=>{const a=e.touches[0],b=e.touches[1];return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);};
+  cv.addEventListener("touchstart",e=>{const r=cv.getBoundingClientRect();
+    if(e.touches.length>=2){_pinch=_td(e);}else{const t=e.touches[0];onDown(t.clientX-r.left,t.clientY-r.top);}e.preventDefault();},{passive:false});
+  cv.addEventListener("touchmove",e=>{const r=cv.getBoundingClientRect();
+    if(e.touches.length>=2&&_pinch){const d=_td(e);if(d>0){setZoom(view.zoom*(d/_pinch));_pinch=d;}}
+    else if(e.touches.length===1){const t=e.touches[0];onMove(t.clientX-r.left,t.clientY-r.top);}e.preventDefault();},{passive:false});
+  cv.addEventListener("touchend",e=>{if(e.touches.length===0){_pinch=null;onUp(view.lastX,view.lastY);}e.preventDefault();},{passive:false});
   cv.addEventListener("wheel",e=>{e.preventDefault();setZoom(view.zoom*(e.deltaY<0?1.12:0.89));},{passive:false});}
 function setZoom(z){view.zoom=Math.max(0.5,Math.min(3,z));view.idle=0;}
 document.addEventListener("keydown",e=>{
@@ -755,7 +788,7 @@ function pickMood(m){MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textCon
   document.querySelectorAll("#moodBtns .moodbtn").forEach(b=>b.disabled=true);
   setTimeout(()=>{$("introOverlay").classList.remove("show");newPuzzle();},950);}
 
-function boot(){cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();showIntro();}
+function boot(){if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}}cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();showIntro();}
 boot();
 
 

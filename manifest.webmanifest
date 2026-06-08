@@ -1,0 +1,14 @@
+{
+  "name": "RUMI 3D — words on a spinning solid",
+  "short_name": "RUMI 3D",
+  "description": "A crossword on the surface of a rotating 3D solid. Solve the edges, open the faces, follow the words to the center.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0e1a",
+  "theme_color": "#0b0e1a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
