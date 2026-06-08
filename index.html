@@ -111,6 +111,16 @@
   .card .tipbox{margin-top:15px;border-top:1px solid var(--line);padding-top:13px}
   .card .tipbox p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 10px}
   .card .tipbox a.btn{background:linear-gradient(135deg,#ffd166,#f7a325);color:#1a1300;border:none;text-decoration:none;display:flex;align-items:center;justify-content:center}
+  .tutcard{max-width:470px;text-align:left;max-height:88vh;overflow:auto}
+  .tutcard .tutk{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;text-align:center}
+  .tutcard h2{text-align:center;margin:0 0 10px}
+  .tutcard .tutintro{color:var(--ink);font-size:14px;line-height:1.5;margin:0 0 13px}
+  .tutcard ul.tutsteps{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:9px}
+  .tutcard ul.tutsteps li{font-size:13.5px;line-height:1.45;color:var(--muted);padding-left:16px;position:relative}
+  .tutcard ul.tutsteps li:before{content:"◆";position:absolute;left:0;top:3px;color:var(--spine);font-size:9px}
+  .tutcard ul.tutsteps li b{color:var(--ink)}
+  .tutcard .tuttip{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin:0 0 14px;line-height:1.45}
+  .tutcard .btn.primary{width:100%}
 </style>
 </head>
 <body>
@@ -127,7 +137,7 @@
     <div class="cluebar"><div class="num" id="curNum">1</div><div class="txt" id="curClue">Loading…</div></div>
     <div class="scenewrap">
       <canvas id="scene"></canvas>
-      <div class="hintrot">drag to rotate · scroll to zoom · click + type · Tab = next word · Space = face it</div>
+      <div class="hintrot">drag to rotate · scroll/pinch to zoom · tap + type · Tab = next word · Space = face it</div>
       <div class="zoomctl"><button id="btnZoomIn" title="Zoom in (+)">+</button><button id="btnZoomOut" title="Zoom out (−)">−</button></div>
       <div class="spinner" id="spinner"><div class="ring"></div><span>Folding the solid…</span></div>
     </div>
@@ -144,6 +154,7 @@
         <button class="btn danger" id="btnReveal">Reveal</button>
         <button class="btn primary" id="btnNew">New</button>
         <button class="btn spineb" id="btnIntent">✦ Intent</button>
+        <button class="btn" id="btnHelp">How to play</button>
       </div>
     </div>
     <div class="panelbox">
@@ -153,6 +164,7 @@
   </div>
 </main>
 <footer>Every edge of the solid is a word; every glowing corner is a single letter shared by all the words that meet there. Solve one word and its corners hand letters to its neighbors — across the surface of a 3D shape you can spin.</footer>
+<div class="overlay" id="tutOverlay"><div class="card tutcard" id="tutCard"></div></div>
 <div class="overlay" id="introOverlay"><div class="card introcard">
   <div class="introk">before the solid forms</div>
   <h2>What are you bringing to the center?</h2>
@@ -765,7 +777,8 @@ function buildControls(){const s=$("sizeSel");s.innerHTML="";
   s.value=sizeName;s.addEventListener("change",()=>{sizeName=s.value;store.size=sizeName;persist();newPuzzle();});
   $("btnNew").onclick=newPuzzle;$("btnCheck").onclick=check;$("btnHint").onclick=hint;$("btnCorner").onclick=revealCorner;$("btnReveal").onclick=reveal;
   const zi=$("btnZoomIn"),zo=$("btnZoomOut");if(zi)zi.onclick=()=>setZoom(view.zoom*1.15);if(zo)zo.onclick=()=>setZoom(view.zoom*0.87);
-  const bi=$("btnIntent");if(bi)bi.onclick=showIntro;}
+  const bi=$("btnIntent");if(bi)bi.onclick=showIntro;
+  const bh=$("btnHelp");if(bh)bh.onclick=()=>showTutorial(true);}
 function wireCanvas(){
   cv.addEventListener("mousedown",e=>{lastTouch=false;const r=cv.getBoundingClientRect();onDown(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener("mousemove",e=>{const r=cv.getBoundingClientRect();onMove(e.clientX-r.left,e.clientY-r.top);});
@@ -805,6 +818,22 @@ const MOODS=[
  {label:"Surprise me", words:null,                                line:"As you wish. Something is already circling."}
 ];
 let MOODFILTER=null;
+function showTutorial(reopen){
+  $("tutCard").innerHTML='<div class="tutk">how to play</div><h2>RUMI 3D</h2>'+
+    '<p class="tutintro">Every edge of the solid is a word. Every glowing corner is one letter, shared by all the words that meet there — a crossword wrapped around a shape you can spin.</p>'+
+    '<ul class="tutsteps">'+
+    '<li><b>Spin &amp; zoom.</b> Drag to rotate the solid; pinch or scroll to zoom in close.</li>'+
+    '<li><b>Tap a word, then type.</b> Tap any edge or corner to pick a word and fill it — on a phone the keyboard pops up.</li>'+
+    '<li><b>Corners are shared.</b> Solving one word hands its corner letters to the words around it, so the grid unlocks itself.</li>'+
+    '<li><b>Dig inward.</b> Finish the edges and the faces open with new words; those release spokes that dive toward the center.</li>'+
+    '<li><b>Reach the center</b> to uncover what all the words were quietly circling.</li>'+
+    '</ul>'+
+    '<p class="tuttip">Tab = next word · Space = turn the current word to face you · clues are listed on the right · ✦ Intent sets the mood.</p>'+
+    '<button class="btn primary" onclick="'+(reopen?'closeTutorial()':'startFromTutorial()')+'">'+(reopen?'Close':'Let’s go →')+'</button>';
+  $("tutOverlay").classList.add("show");
+}
+function startFromTutorial(){store.seenTutorial=true;persist();$("tutOverlay").classList.remove("show");showIntro();}
+function closeTutorial(){$("tutOverlay").classList.remove("show");}
 function showIntro(){const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
   const ln=$("introLine");if(ln)ln.textContent="";$("introOverlay").classList.add("show");}
 function pickMood(m){MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textContent=m.line;
@@ -818,7 +847,7 @@ function boot(){if("serviceWorker" in navigator){try{navigator.serviceWorker.reg
   document.body.appendChild(KEYIN);
   KEYIN.addEventListener("input",function(){const v=KEYIN.value,ch=v.slice(-1);if(/[a-zA-Z]/.test(ch))typeLetter(ch.toUpperCase());KEYIN.value="";});
   KEYIN.addEventListener("keydown",function(e){if(e.key==="Backspace"){backspace();e.preventDefault();}});
-  cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();showIntro();}
+  cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();if(store.seenTutorial){showIntro();}else{showTutorial(false);}}
 boot();
 
 

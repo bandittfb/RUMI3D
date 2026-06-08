@@ -1,5 +1,5 @@
 /* RUMI 3D service worker — offline cache for the single-page app */
-const CACHE = "rumi3d-v4";
+const CACHE = "rumi3d-v5";
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", e => {
