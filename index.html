@@ -547,6 +547,7 @@ let sel={word:null,cellIdx:0};
 let projCells=[],focusAnim=null;
 let timer=0,tick=null,started=false,won=false;
 let mode="practice",dailyKey=null,dailySeed=null;
+let FOCUS=true;
 let particles=[],doneSet=new Set(),coreEnergy=0,winFlash=0,corePulse=0;
 let KEYIN=null,lastTouch=false;
 const touchDevice=("ontouchstart" in window)||((navigator.maxTouchPoints||0)>0);
@@ -659,6 +660,7 @@ function render(){
   drawFaceChords();
   drawParticles();
   drawNodes();
+  if(sel.word&&!won&&FOCUS&&!view.drag){ctx.save();ctx.fillStyle="rgba(8,10,20,0.52)";ctx.fillRect(0,0,W,H);ctx.restore();drawSelectedWord(sel.word);}
   if(sel.word)drawDir(sel.word);
   }catch(e){ if(typeof console!=='undefined')console.warn('frame',e); }
   requestAnimationFrame(render);
@@ -715,6 +717,12 @@ function drawNodes(){
   nodes.sort((a,b)=>a.pos.z-b.pos.z);
   projCells=[];
   for(const n of nodes)drawNode(n);
+}
+function drawSelectedWord(w){
+  if(w.layer==='edge'){drawEdge(w);}
+  else{polyline(w.cells);ctx.strokeStyle=w.layer==='spoke'?"rgba(150,120,255,.95)":"rgba(124,92,255,.95)";ctx.lineWidth=3;ctx.stroke();}
+  const seen=new Set();
+  for(const c of w.cells){const id=c.kind==='v'?'v'+c.v:(c.kind==='core'?'core':c.key);if(seen.has(id))continue;seen.add(id);drawNode({id,c,pos:projCell(c)});}
 }
 let checkFlash=false;
 function drawNode(n){

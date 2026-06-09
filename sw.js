@@ -1,6 +1,6 @@
 /* RUMI 3D service worker — network-first for the page (so updates always land),
    cache-first for static assets, cached fallback when offline. */
-const CACHE = "rumi3d-v16";
+const CACHE = "rumi3d-v17";
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", e => {
