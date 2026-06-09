@@ -574,7 +574,7 @@ function newPuzzle(){
     RNG=Math.random;
     sel={word:P.edges[0],cellIdx:0};
     view.yaw=0.6;view.pitch=-0.5;view.auto=true;view.idle=0;
-    buildClues();updateHud();$("spinner").classList.remove("show");
+    buildClues();updateHud();$("spinner").classList.remove("show");setSel(P.edges[0],firstEmpty(P.edges[0]));
     focusWord(P.edges[0],false);resize();if(touchDevice)showKbd();
   },40);
 }
