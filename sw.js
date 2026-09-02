@@ -1,7 +1,7 @@
 /* RUMI 3D service worker — network-first for the page (so updates always land) with a short
    timeout so a flaky connection falls back to the cached game instead of hanging;
    cache-first for static assets; cached fallback when offline. */
-const CACHE = "rumi3d-v20";
+const CACHE = "rumi3d-v21";
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 const PAGE_TIMEOUT_MS = 3000;
 

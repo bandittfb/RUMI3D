@@ -97,21 +97,29 @@
   html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
   body{touch-action:manipulation}
   #scene{touch-action:none;-webkit-user-select:none;user-select:none}
+  /* mobile toolbar + drawer: hidden on desktop */
+  .mtools,.drawerbar{display:none}
   @media(max-width:760px){
-    /* the solid comes first; controls move below it so the puzzle is the first thing on screen */
-    main{flex-direction:column;flex-wrap:nowrap;align-items:stretch;padding:10px;gap:10px}
-    .left{min-width:0;max-width:100%;width:100%}
-    .side{width:100%;max-width:100%}
-    .left,.side{display:contents}
+    /* the solid fills the screen; controls and the clue list live in a drawer opened from the toolbar,
+       because dragging on the solid rotates it, so there is nothing to scroll the page with */
+    main{flex-direction:column;flex-wrap:nowrap;align-items:stretch;padding:10px;gap:8px}
+    .left{min-width:0;max-width:100%;width:100%;display:contents}
     .cluebar{order:1}
-    .scenewrap{height:50vh;min-height:280px;order:2}
-    .progress{order:3}
-    .panelbox.ctrls{order:4}
-    .panelbox:not(.ctrls){order:5}
-    /* with the on-screen keyboard up, fit clue bar + solid above it (header ≈ 50px, keyboard ≈ 212px) */
-    body.kbdopen .scenewrap{height:calc(100vh - 348px);min-height:236px;max-height:56vh}
+    .mtools{display:flex;gap:6px;order:2}
+    .mtools .btn{padding:9px 6px;font-size:12px;min-width:0}
+    .mtools #btnHelpM{flex:0 0 44px}
+    .scenewrap{height:calc(100vh - 230px);min-height:280px;order:3}
+    .progress{order:4}
+    /* with the on-screen keyboard up, fit clue bar + toolbar + solid above it (header ≈ 66px, keyboard ≈ 212px) */
+    body.kbdopen .scenewrap{height:calc(100vh - 400px);min-height:220px}
     body.kbdopen .hintrot{display:none}
     .hintrot{font-size:10px;padding:0 8px}
+    .side{display:none;position:fixed;inset:0;z-index:45;background:var(--bg);width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px 10px calc(20px + env(safe-area-inset-bottom,0px));gap:12px}
+    .side.open{display:flex;flex-direction:column}
+    .drawerbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px 0}
+    .drawerbar b{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+    .drawerbar .btn{flex:0 0 auto;padding:10px 12px}
+    .side #clueList{max-height:none}
     header{padding:8px 12px;gap:8px;flex-wrap:nowrap}
     .brand b{font-size:19px;letter-spacing:3px}
     .brand small{display:none}
@@ -192,6 +200,11 @@
 <main>
   <div class="left">
     <div class="cluebar"><div class="num" id="curNum">1</div><div class="txt" id="curClue">Loading…</div></div>
+    <div class="mtools">
+      <button class="btn" id="btnDrawer">☰ Menu &amp; clues</button>
+      <button class="btn" id="btnKbd">⌨ Hide keys</button>
+      <button class="btn" id="btnHelpM" title="How to play">?</button>
+    </div>
     <div class="scenewrap">
       <canvas id="scene"></canvas>
       <div class="hintrot">drag to rotate · scroll/pinch to zoom · tap + type · Tab = next word · Space = face it</div>
@@ -200,7 +213,8 @@
     </div>
     <div class="progress"><div id="progFill"></div></div>
   </div>
-  <div class="side">
+  <div class="side" id="side">
+    <div class="drawerbar"><b>Menu &amp; clues</b><button class="btn" id="btnDrawerClose">Back to the solid ✕</button></div>
     <div class="panelbox ctrls">
       <h4><span>Solid</span><span id="bestLine" title="Your fastest clean solve of this solid"></span></h4>
       <select id="sizeSel"></select>
@@ -742,8 +756,15 @@ function buildKbd(){const host=$("kbd");if(!host||host.dataset.built)return;host
   ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"].forEach((r,ri)=>{const row=document.createElement("div");row.className="krow";
     for(const ch of r)row.appendChild(mkKey(ch,ch));if(ri===2)row.appendChild(mkKey("⌫","bk"));host.appendChild(row);});
   const r4=document.createElement("div");r4.className="krow";r4.appendChild(mkKey("‹ word","pv"));r4.appendChild(mkKey("face it","sp"));r4.appendChild(mkKey("word ›","nx"));host.appendChild(r4);}
-function showKbd(){buildKbd();const h=$("kbd");if(h){h.classList.add("show");document.body.classList.add("kbdopen");}}
-function hideKbd(){const h=$("kbd");if(h){h.classList.remove("show");document.body.classList.remove("kbdopen");}}
+let kbdWanted=true;   // the player's own choice (toolbar toggle); overlays hide the keyboard temporarily
+function showKbd(){if(!kbdWanted)return;buildKbd();const h=$("kbd");if(h){h.classList.add("show");document.body.classList.add("kbdopen");}syncKbdBtn();if(cv)resize();}
+function hideKbd(){const h=$("kbd");if(h){h.classList.remove("show");document.body.classList.remove("kbdopen");}syncKbdBtn();if(cv)resize();}   // the scene box changes size with the keyboard
+function syncKbdBtn(){const b=$("btnKbd");if(b)b.textContent=document.body.classList.contains("kbdopen")?"⌨ Hide keys":"⌨ Show keys";}
+function toggleKbd(){kbdWanted=!document.body.classList.contains("kbdopen");if(kbdWanted)showKbd();else hideKbd();}
+/* mobile drawer holding the controls and the clue list */
+function openDrawer(){const s=$("side");if(s)s.classList.add("open");}
+function closeDrawer(){const s=$("side");if(s)s.classList.remove("open");}
+function drawerOpen(){const s=$("side");return !!(s&&s.classList.contains("open"));}
 /* Build a puzzle. `resume` is a saved-game record: the same seed rebuilds the same puzzle and the
    saved letters, timer and assists are laid back on top. */
 async function newPuzzle(resume){
@@ -773,7 +794,7 @@ async function newPuzzle(resume){
   const first=(resume&&resume.sel&&allWords(P).find(w=>selectable(w)&&w.layer+w.num===resume.sel))||P.edges[0];
   sel={word:first,cellIdx:0};
   buildClues();updateHud();$("spinner").classList.remove("show");setSel(first,firstEmpty(first));
-  focusWord(first,false);resize();if(touchDevice)showKbd();
+  focusWord(first,false);if(touchDevice)showKbd();resize();
   saveGame();
 }
 /* ---------- save / resume ---------- */
@@ -844,7 +865,7 @@ function angDiff(a,b){let d=(b-a)%(2*Math.PI);if(d>Math.PI)d-=2*Math.PI;if(d<-Ma
 
 /* ---------- render ---------- */
 function resize(){DPR=Math.min(window.devicePixelRatio||1,2);const box=cv.parentElement.getBoundingClientRect();
-  W=Math.max(320,box.width);H=Math.max(360,Math.min(620,box.height||560));
+  W=Math.max(280,box.width);H=Math.max(200,Math.min(620,box.height||560));   // follow the box: on a short phone screen the scene is well under 360px
   cv.style.width=W+"px";cv.style.height=H+"px";cv.width=W*DPR;cv.height=H*DPR;
   ctx.setTransform(DPR,0,0,DPR,0,0);CX=W/2;CY=H/2;SCALE=Math.min(W,H)*0.92;}
 function render(){
@@ -1072,7 +1093,7 @@ function buildClues(){const ul=$("clueList");ul.innerHTML="";
   const group=(title,words,gateName)=>{const h=document.createElement("li");h.className="divider";h.textContent=title;ul.appendChild(h);
     words.forEach(w=>{const li=document.createElement("li");li.dataset.id=w.layer+w.num;li.dataset.layer=w.layer;
       li.innerHTML=`<b>${w.num}</b><span class="ctext"></span>`;
-      li.addEventListener("click",()=>{if(selectable(w)){setSel(w,firstEmpty(w));focusWord(w);}});ul.appendChild(li);});};
+      li.addEventListener("click",()=>{if(selectable(w)){setSel(w,firstEmpty(w));focusWord(w);closeDrawer();}});ul.appendChild(li);});};
   group("◆ Edges",P.edges);
   group("△ Faces",P.faceWords);
   group("✶ Spokes",P.spokeWords);
@@ -1175,7 +1196,15 @@ function buildControls(){const s=$("sizeSel");s.innerHTML="";
   $("btnNew").onclick=()=>{mode="practice";newPuzzle();};$("btnCheck").onclick=check;$("btnHint").onclick=hint;$("btnCorner").onclick=revealCorner;$("btnReveal").onclick=reveal;
   const zi=$("btnZoomIn"),zo=$("btnZoomOut");if(zi)zi.onclick=()=>setZoom(view.zoom*1.15);if(zo)zo.onclick=()=>setZoom(view.zoom*0.87);
   const bi=$("btnIntent");if(bi)bi.onclick=showIntro;
-  const bh=$("btnHelp");if(bh)bh.onclick=()=>showTutorial(true);}
+  const bh=$("btnHelp");if(bh)bh.onclick=()=>showTutorial(true);
+  // mobile toolbar + drawer
+  const bd=$("btnDrawer");if(bd)bd.onclick=openDrawer;
+  const bc=$("btnDrawerClose");if(bc)bc.onclick=closeDrawer;
+  const bk=$("btnKbd");if(bk)bk.onclick=toggleKbd;
+  const bm=$("btnHelpM");if(bm)bm.onclick=()=>showTutorial(true);
+  // any action taken inside the drawer returns you to the solid (clue clicks close it themselves)
+  const side=$("side");if(side){side.addEventListener("click",e=>{const t=e.target.closest("button");if(t&&t.id!=="btnDrawerClose"&&drawerOpen())closeDrawer();});
+    s.addEventListener("change",()=>closeDrawer());}}
 function wireCanvas(){
   cv.addEventListener("mousedown",e=>{const r=cv.getBoundingClientRect();onDown(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener("mousemove",e=>{const r=cv.getBoundingClientRect();onMove(e.clientX-r.left,e.clientY-r.top);});
@@ -1194,6 +1223,7 @@ document.addEventListener("keydown",e=>{
   if($("overlay").classList.contains("show")){if(e.key==="Enter")nextFromWin();else if(e.key==="Escape")$("overlay").classList.remove("show");return;}
   if($("tutOverlay").classList.contains("show")){if(e.key==="Escape"||e.key==="Enter"){if(store.seenTutorial)closeTutorial();else startFromTutorial();}return;}
   if($("introOverlay").classList.contains("show")){if(e.key==="Escape"&&P)$("introOverlay").classList.remove("show");return;}
+  if(drawerOpen()){if(e.key==="Escape")closeDrawer();return;}
   const ae=document.activeElement;if(ae&&(ae.tagName==="SELECT"||ae.tagName==="INPUT"||ae.tagName==="TEXTAREA"))return;
   if(/^[a-zA-Z]$/.test(e.key)){typeLetter(e.key.toUpperCase());e.preventDefault();}
   else if(e.key==="Backspace"){backspace();e.preventDefault();}
@@ -1221,7 +1251,7 @@ const MOODS=[
  {label:"Surprise me", words:null,                                line:"As you wish. Something is already circling."}
 ];
 let MOODFILTER=null;
-function showTutorial(reopen){hideKbd();
+function showTutorial(reopen){hideKbd();closeDrawer();
   $("tutCard").innerHTML='<div class="tutk">how to play</div><h2>RUMI 3D</h2>'+
     '<p class="tutintro">Every edge of the solid is a word. Every glowing corner is one letter, shared by all the words that meet there — a crossword wrapped around a shape you can spin.</p>'+
     '<ul class="tutsteps">'+
@@ -1242,8 +1272,8 @@ function showTutorial(reopen){hideKbd();
   $("tutOverlay").classList.add("show");
 }
 function startFromTutorial(){store.seenTutorial=true;persist();$("tutOverlay").classList.remove("show");showIntro();}
-function closeTutorial(){$("tutOverlay").classList.remove("show");}
-function showIntro(){hideKbd();renderDailyBlock();const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
+function closeTutorial(){$("tutOverlay").classList.remove("show");if(P&&touchDevice)showKbd();}
+function showIntro(){hideKbd();closeDrawer();renderDailyBlock();const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
   const ln=$("introLine");if(ln)ln.textContent="";$("introOverlay").classList.add("show");}
 function pickMood(m){mode="practice";MOODFILTER=m.words;MOODIDX=MOODS.indexOf(m);const ln=$("introLine");if(ln)ln.textContent=m.line;
   document.querySelectorAll("#moodBtns .moodbtn").forEach(b=>b.disabled=true);
