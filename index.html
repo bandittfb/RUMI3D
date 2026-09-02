@@ -9,7 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="RUMI 3D">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>RUMI 3D — words on a spinning solid</title>
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rumi3d.org/">
@@ -201,7 +202,7 @@
       <select id="sizeSel"></select>
       <div class="btns">
         <button class="btn" id="btnCheck">Check</button>
-        <button class="btn" id="btnHint">Hint word</button>
+        <button class="btn" id="btnHint" title="Fill one letter of the current word">Hint letter</button>
         <button class="btn spineb" id="btnCorner">Reveal corner</button>
         <button class="btn danger" id="btnReveal">Reveal</button>
         <button class="btn primary" id="btnNew">New</button>
@@ -230,6 +231,28 @@
 <script>
 /* ============ 3D RUMI: generator core + play model ============ */
 const RAW = [
+ // payoff words and their themes need to exist in the bank so the puzzle can circle them
+ ["STAR","Night-sky light"],["SEED","Where a plant starts"],["DOOR","Way into a room"],["TIMER","Countdown device"],
+ ["HOME","Where you live"],["EMBER","Glowing coal"],["NEST","Bird's cradle"],["TRUTH","What really happened"],
+ ["BLAZE","Roaring fire"],["FLAME","Candle's tip"],["SPARK","Tiny flash of fire"],["COAL","Black fuel"],["SOOT","Chimney black"],
+ ["MOON","Night's lamp"],["NIGHT","After sunset"],["SLEEP","Nightly rest"],["SHADOW","Cast by light"],["WHISPER","Hushed voice"],
+ ["KITCHEN","Cooking room"],["CHAIR","Seat with a back"],["ROOF","House's hat"],["SUPPER","Evening meal"],["FAMILY","Your people"],
+ ["SALT","Sea's flavor"],["WATER","H2O"],["BOAT","Small vessel"],["SHIP","Big vessel"],["GULL","Beach bird"],["KELP","Sea weed"],
+ ["PAST","Gone by"],["FUTURE","What's ahead"],["HISTORY","The recorded past"],["CALENDAR","Days on a wall"],["SUNDIAL","Shadow clock"],
+ ["LOVE","Deep affection"],["KISS","Lips' greeting"],["HOPE","Wish held onto"],["SORROW","Deep sadness"],["FRIEND","Trusted companion"],
+ ["SKY","What's overhead"],["LIGHT","Darkness' opposite"],["RAIN","Falling drops"],["WIND","Moving air"],["LIGHTNING","Storm's flash"],
+ ["GALE","Strong wind"],["FLOOD","Overflowing water"],["SHELTER","Cover from weather"],["UMBRELLA","Rain shield"],["PUDDLE","Rain's leftover"],
+ ["SOIL","Planting dirt"],["DIRT","Garden ground"],["TREE","Trunk and branches"],["KERNEL","Seed's core"],["LEAF","Tree's green plate"],
+ ["KEY","Lock opener"],["LOCK","Key's partner"],["KNOB","Door handle"],["GATE","Fence door"],["WALL","Room divider"],["HALL","Long passage"],
+ ["ROOM","Walled space"],["ARCH","Curved opening"],["KNOCK","Rap on a door"],["BELL","Door ringer"],["FENCE","Yard border"],["PATH","Walking way"],
+ ["CLAY","Potter's earth"],["EARTH","Ground underfoot"],["TRUNK","Tree's body"],["BARK","Tree's skin"],["BURROW","Animal's tunnel"],["TWIG","Small branch"],
+ ["STREAM","Small river"],["RAFT","Log float"],["BEAVER","Dam builder"],["REED","Marsh grass"],["MARSH","Boggy wetland"],
+ ["FIRE","Heat and flame"],["FURNACE","Heating chamber"],["FORGE","Smith's fire"],["BONFIRE","Outdoor blaze"],["TINDER","Fire starter"],
+ ["EGG","Nest's contents"],["BIRD","Feathered flyer"],["WING","Flight limb"],["STRING","Thin cord"],["STRAW","Dry stalks"],["BEAK","Bird's bill"],
+ ["OWL","Night hooter"],["HATCH","Break from the egg"],["CHICK","Baby bird"],["SECRET","Kept hidden"],["ANSWER","Reply"],["QUESTION","Asked thing"],
+ ["BLUSH","Cheeks' red"],["PASSION","Intense feeling"],["ACHE","Dull pain"],["LOG","Fireplace fuel"],
+ ["PROOF","Evidence"],["CLUE","Helpful hint"],["WITNESS","One who saw"],["OATH","Solemn promise"],["FACT","Verified thing"],["HONEST","Truthful"],
+ ["LIE","Untruth"],["RUMOR","Unverified talk"],["JUDGE","Court decider"],["TRIAL","Court case"],["FLOW","Steady movement"],["SOURCE","Where it begins"],
  ["PLANET","World orbiting a star"],["COMET","Tailed ice ball"],["ORBIT","Path around a star"],
  ["METEOR","Shooting star"],["SOLAR","Of the sun"],["LUNAR","Of the moon"],["CRATER","Impact scar"],
  ["RIVER","Flowing water"],["ISLAND","Sea-ringed land"],["VALLEY","Low between hills"],["DESERT","Arid land"],
@@ -321,8 +344,21 @@ const RAW = [
  ["AROMA","Pleasant smell"],["SCENT","Trail smell"],["FRAGRANCE","Sweet smell"],["PERFUME","Bottled scent"],["INCENSE","Burning scent"],["SAVOR","Taste slowly"],["FLAVOR","Taste quality"],["SPICE","Flavor kick"],["ZEST","Citrus peel"],["TANG","Sharp taste"],["RELISH","Enjoy fully"],["MORSEL","Small bite"],["CRUMB","Bread bit"],["NIBBLE","Small bite"],["FEAST","Eat grandly"],["SUPPER","Evening meal"],["BRUNCH","Late breakfast"],["PICNIC","Outdoor meal"],["RECIPE","Cooking guide"],["MENU","Dish list"],
  ["GLACIAL","Ice-slow"],["TROPICAL","Hot and humid"],["POLAR","Of the poles"],["COASTAL","By the sea"],["ALPINE","Of high mountains"],["DESERT","Sandy and dry"],["VOLCANIC","Of lava"],["MARINE","Of the sea"],["LUNAR","Of the moon"],["SOLAR","Of the sun"],["STELLAR","Of the stars"],["CELESTIAL","Of the sky"],["TERRAIN","Lay of the land"],["LANDSCAPE","Scenic view"],["VISTA","Sweeping view"],["PANORAMA","Wide view"],["HORIZON","Far edge"],["SKYLINE","City outline"],["SCENERY","Stage backdrop"],["MIRAGE","Desert illusion"]
 ];
-const _seen=new Set();const BANK=[];
-for(const [w,c] of RAW){const W=w.toUpperCase();if(!/^[A-Z]+$/.test(W)||W.length<3)continue;if(_seen.has(W))continue;_seen.add(W);BANK.push({word:W,clue:c});}
+/* Duplicate words in RAW are merged: every distinct clue is kept and one is drawn per puzzle, so a
+   repeat becomes clue variety instead of dead weight. Clues in BAD_CLUES are dropped outright. */
+const BAD_CLUES=new Set(["ANCHOR|Ship's hold","JELLY|Stinging drifter","EAGLES|Philly NFL"]);
+const _byWord=new Map();
+for(const [w,c] of RAW){const W=w.toUpperCase();if(!/^[A-Z]+$/.test(W)||W.length<3)continue;if(BAD_CLUES.has(W+"|"+c))continue;
+  let e=_byWord.get(W);if(!e){e={word:W,clues:[]};_byWord.set(W,e);}if(e.clues.indexOf(c)<0)e.clues.push(c);}
+const BANK=[..._byWord.values()];
+const BANK_SET=new Set(BANK.map(e=>e.word));
+// plain plurals (TIGERS beside TIGER) rank last as candidates: they make weak clues and cluster on an S core
+const PLURAL=new Set(BANK.filter(e=>e.word.endsWith("S")&&BANK_SET.has(e.word.slice(0,-1))).map(e=>e.word));
+function pickClue(e){return e.clues[(RNG()*e.clues.length)|0];}
+// letter indexes so the solver scans dozens of candidates per edge instead of the whole bank
+const BY_FIRST={},BY_LAST={},BY_BOTH={};
+for(const e of BANK){const f=e.word[0],l=e.word[e.word.length-1];
+  (BY_FIRST[f]=BY_FIRST[f]||[]).push(e);(BY_LAST[l]=BY_LAST[l]||[]).push(e);(BY_BOTH[f+l]=BY_BOTH[f+l]||[]).push(e);}
 
 function makeSolid(name){
   let V;
@@ -366,40 +402,54 @@ function bfsEdgeOrder(nV,E){const adj=Array.from({length:nV},()=>[]);E.forEach((
   const sE=new Set(),order=[],sV=new Set([0]),q=[0];
   while(q.length){const v=q.shift();for(const[w,ei]of adj[v]){if(!sE.has(ei)){sE.add(ei);order.push(ei);}if(!sV.has(w)){sV.add(w);q.push(w);}}}
   E.forEach((_,i)=>{if(!sE.has(i))order.push(i);});return order;}
-function solveSolid(solid,restarts,nodeBudget){
+/* One restart of the edge solver: backtracking over edges in BFS order.
+   `prefer` (the payoff's theme words) go first among candidates so the surface actually circles the
+   center; `avoid` keeps the payoff word itself off the board; plain plurals go last. */
+function solveOnce(solid,nodeBudget,prefer,avoid){
   const {V,E}=solid;
+  const vL=Array(V.length).fill(null),eW=Array(E.length).fill(null),used=new Set();
+  const order=bfsEdgeOrder(V.length,E);let nodes=0,bail=false;
+  const ok=(function assign(k){
+    if(bail)return false; if(++nodes>nodeBudget){bail=true;return false;}
+    if(k===order.length)return true;
+    const ei=order[k],[u,v]=E[ei];let cand=[];
+    // words that can run start->end given the letters already fixed at those corners
+    const pool=(a,b)=>{const la=vL[a],lb=vL[b];return la===null?(lb===null?BANK:(BY_LAST[lb]||[])):(lb===null?(BY_FIRST[la]||[]):(BY_BOTH[la+lb]||[]));};
+    const consider=(list,start,end)=>{for(const e of list){if(used.has(e.word)||(avoid&&avoid.has(e.word)))continue;const f=e.word[0],l=e.word[e.word.length-1];
+      if(start===v&&f===l)continue;                       // a same-letter word is the same in both orientations
+      if((vL[start]===null||vL[start]===f)&&(vL[end]===null||vL[end]===l))cand.push([e,start,end,f,l]);}};
+    consider(pool(u,v),u,v);   // orientation 1: word starts at u, ends at v
+    consider(pool(v,u),v,u);   // orientation 2: word starts at v, ends at u
+    cand=shuffle(cand);
+    const tiers=[[],[],[]];for(const c of cand)tiers[(prefer&&prefer.has(c[0].word))?0:(PLURAL.has(c[0].word)?2:1)].push(c);
+    cand=tiers[0].concat(tiers[1],tiers[2]);
+    for(const[e,start,end,f,l]of cand.slice(0,28)){
+      const ss=vL[start],se=vL[end];vL[start]=f;vL[end]=l;used.add(e.word);
+      eW[ei]={word:e.word,clue:pickClue(e),from:start,to:end,fromL:f,toL:l};
+      if(assign(k+1))return true;
+      vL[start]=ss;vL[end]=se;used.delete(e.word);eW[ei]=null;
+    }
+    return false;
+  })(0);
+  return ok?{vertexLetter:vL,edgeWords:eW}:null;
+}
+/* Time-sliced: yields to the page every ~30ms so the spinner animates and taps register while an
+   icosa (which can take a couple of seconds) is being solved. `abort()` cancels a stale generation. */
+async function solveSolid(solid,restarts,nodeBudget,prefer,avoid,abort){
+  let last=performance.now();
   for(let r=0;r<restarts;r++){
-    const vL=Array(V.length).fill(null),eW=Array(E.length).fill(null),used=new Set();
-    const order=bfsEdgeOrder(V.length,E);let nodes=0,bail=false;
-    const ok=(function assign(k){
-      if(bail)return false; if(++nodes>nodeBudget){bail=true;return false;}
-      if(k===order.length)return true;
-      const ei=order[k],[u,v]=E[ei];let cand=[];
-      for(const e of BANK){if(used.has(e.word))continue;const f=e.word[0],l=e.word[e.word.length-1];
-        // orientation 1: word starts at u, ends at v
-        if((vL[u]===null||vL[u]===f)&&(vL[v]===null||vL[v]===l))cand.push([e,u,v,f,l]);
-        // orientation 2: word starts at v, ends at u
-        if(f!==l&&(vL[v]===null||vL[v]===f)&&(vL[u]===null||vL[u]===l))cand.push([e,v,u,f,l]);}
-      cand=shuffle(cand);
-      for(const[e,start,end,f,l]of cand.slice(0,28)){
-        const ss=vL[start],se=vL[end];vL[start]=f;vL[end]=l;used.add(e.word);
-        eW[ei]={word:e.word,clue:e.clue,from:start,to:end,fromL:f,toL:l};
-        if(assign(k+1))return true;
-        vL[start]=ss;vL[end]=se;used.delete(e.word);eW[ei]=null;
-      }
-      return false;
-    })(0);
-    if(ok)return {vertexLetter:vL,edgeWords:eW};
+    if(performance.now()-last>30){await new Promise(res=>setTimeout(res,0));last=performance.now();if(abort&&abort())return null;}
+    const sol=solveOnce(solid,nodeBudget,prefer,avoid);if(sol)return sol;
   }
   return null;
 }
 
 /* ---- build the play model ---- */
-function buildPuzzle(name){
+async function buildPuzzle(name,prefer,avoid,abort){
   const solid=makeSolid(name);
   const budget=name==="icosa"?9000:name==="deca"?12000:name==="octa"?20000:name==="hexa"?8000:4000;
   const restarts=name==="icosa"?3000:name==="deca"?1800:name==="hexa"?500:300;
-  let sol=null;for(let t=0;t<2&&!sol;t++)sol=solveSolid(solid,restarts,budget);
+  let sol=null;for(let t=0;t<2&&!sol;t++){sol=await solveSolid(solid,restarts,budget,prefer,avoid,abort);if(abort&&abort())return null;}
   if(!sol)return null;
   const vertices=solid.V.map((p,i)=>({i,p,sol:sol.vertexLetter[i],cur:""}));
   const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
@@ -422,53 +472,61 @@ function solved(p){for(const w of allWords(p))for(const c of w.cells)if(getCur(p
 
 function allWords(p){return [...p.edges,...(p.faceWords||[]),...(p.spokeWords||[])];}
 function _shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(RNG()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
-function _coreLetter(){const cnt={};for(const e of BANK){const l=e.word[e.word.length-1];cnt[l]=(cnt[l]||0)+1;}let best='E',bc=0;for(const k in cnt)if(cnt[k]>bc){bc=cnt[k];best=k;}return best;}
 
+/* Each payoff carries a `near` list: the theme words the puzzle is built from (edges first, then
+   faces and spokes). The payoff word itself is kept OFF the board so the reveal stays a reveal. */
 const PAYOFFS=[
- {word:"DREAM",kind:"a poem",near:["GHOST","MAGIC","RIDDLE","CLOUD","DREAM"],
+ {word:"DREAM",kind:"a poem",near:["GHOST","MAGIC","RIDDLE","CLOUD","CRESCENT","DUSK","FOG","HAZE","LEGEND","LUNAR","MIDNIGHT","MIST","NEBULA","PILLOW","SHADE","SMOKE","TWILIGHT","VAPOR","WONDER","MOON","SHADOW","LANTERN","CANDLE","WINDOW","MIRROR","WHISPER","BLANKET","NIGHT","STAR","SLEEP","MEMORY","SNORE"],
   text:"All night you build rooms no one enters,\nand furnish them with faces you almost recall.\nBy dawn the doors are gone -\nbut some strange light keeps finding\nthe window you can never quite locate."},
- {word:"HOME",kind:"a poem",near:["HOUSE","CABIN","GARDEN","WINDOW","CANDLE","HEART"],
+ {word:"HOME",kind:"a poem",near:["HOUSE","CABIN","GARDEN","WINDOW","CANDLE","HEART","ABODE","ATTIC","BLANKET","COTTAGE","CURTAIN","DOORWAY","HEARTH","KETTLE","LAMP","LANTERN","LODGE","MANTEL","PILLOW","PORCH","QUILT","SHELF","SLIPPER","STOVE","THRESHOLD","KITCHEN","CHAIR","ROOF","DOOR","SUPPER","BREAD","TOAST","FAMILY","PANTRY","HALLWAY","CELLAR","SOFA","RAFTER","EAVES"],
   text:"It was never the walls.\nIt was the sound the door made only for you,\nthe chair that kept your shape.\nYou can wander your whole life\nten minutes from the one place that knew your name."},
- {word:"OCEAN",kind:"a poem",near:["OCEAN","TIDE","SHORE","WHALE","BEACH","ISLAND","HARBOR","STORM"],
+ {word:"OCEAN",kind:"a poem",near:["TIDE","SHORE","WHALE","BEACH","ISLAND","HARBOR","STORM","ANCHOR","CANOE","CORAL","COVE","CURRENT","DEPTH","DOLPHIN","FERRY","FOAM","HULL","INLET","KEEL","LAGOON","MARINA","MAST","OCTOPUS","ORCA","OYSTER","PEARL","PIER","PORT","REEF","SAIL","SAILOR","SEAL","SHARK","SHELL","SURF","TURTLE","WAVE","SALT","WATER","BOAT","SHIP","GULL","KELP","DUNE"],
   text:"Everything you've lost is in here,\nturned to salt and patience.\nThe tide does not take - it returns,\nonly slower than a life,\nand never quite the thing you gave it."},
- {word:"TIME",kind:"a poem",near:["CLOCK","WATCH","TIMER","ALARM","RIVER"],
+ {word:"TIME",kind:"a poem",near:["CLOCK","WATCH","TIMER","ALARM","RIVER","CENTURY","DAWN","DECADE","DUSK","EPOCH","ERA","HOUR","MEMORY","MIDNIGHT","MINUTE","MOMENT","MONTH","NOON","ONCE","SEASON","SUMMER","WINTER","TWILIGHT","YEAR","AUTUMN","SPRING","SUNRISE","SUNSET","PAST","FUTURE","HISTORY","CALENDAR","SUNDIAL","SAND"],
   text:"It was never a river; rivers fall again as rain.\nThis goes one way, and it goes through you,\nquiet as a key in a lock you didn't know you were.\nOnly what you do now is beyond its reach."},
- {word:"HEART",kind:"a quip",near:["HEART","BRAVE","SMILE","TEARS"],
+ {word:"HEART",kind:"a quip",near:["BRAVE","SMILE","TEARS","BALLAD","COURAGE","DRUM","GRACE","GRIEF","HEARTH","LAUGH","LONGING","MERCY","PULSE","RHYTHM","TENDER","TRUST","LOVE","KISS","HOPE","SORROW","FRIEND","FEVER","BLUSH","PASSION","ACHE"],
   text:"Anatomically: a fist-sized pump.\nIn practice: the bravest idiot you own -\nstill betting the house on people who leave,\nand somehow never learning.\nKeep it exactly that way."},
- {word:"STAR",kind:"a poem",near:["STAR","COMET","METEOR","SOLAR","LUNAR","ORBIT","PLANET"],
+ {word:"STAR",kind:"a poem",near:["COMET","METEOR","SOLAR","LUNAR","ORBIT","PLANET","ASTEROID","AURORA","BEACON","COSMOS","CRESCENT","DAWN","ECLIPSE","GALAXY","GLOW","HORIZON","LANTERN","LIGHTHOUSE","MIDNIGHT","NEBULA","PULSAR","QUASAR","ROCKET","SATELLITE","SPACE","SUNRISE","SUPERNOVA","TELESCOPE","TWILIGHT","TWINKLE","ZENITH","NIGHT","MOON","SKY","LIGHT","FIRE","SPARK"],
   text:"By the time it reaches you it may already be gone.\nYou steer by it anyway.\nThat is the whole trick of distance:\nthe light arrives long after the fire,\nand it is still enough to lead you home."},
- {word:"STORM",kind:"a small story",near:["STORM","CLOUD","RIVER","FIELD"],
+ {word:"STORM",kind:"a small story",near:["CLOUD","RIVER","FIELD","BLIZZARD","BREEZE","CYCLONE","DOWNPOUR","DRIZZLE","FOG","FROST","GUST","HAIL","MONSOON","OVERCAST","RAINBOW","SHUTTER","SLEET","THUNDER","TYPHOON","WINDOW","RAIN","WIND","LIGHTNING","GALE","FLOOD","SHELTER","UMBRELLA","PUDDLE","GUTTER","CANDLE","LANTERN","AWNING"],
   text:"The forecast said clear. The barometer disagreed, quietly, all afternoon.\nBy dusk the trees had started their nervous talking.\nWe brought the chairs in, filled the jugs, and waited -\nand when it finally broke it was not punishment but relief,\nthe sky saying at last the thing it had held in all day."},
- {word:"SEED",kind:"a poem",near:["SEED","FOREST","FLOWER","GRASS","FIELD","MAPLE","CEDAR"],
+ {word:"SEED",kind:"a poem",near:["FOREST","FLOWER","GRASS","FIELD","MAPLE","CEDAR","ACORN","BIRCH","BLOOM","BLOSSOM","BRANCH","BUD","CLOVER","FERN","GARDEN","HARVEST","LEAF","MEADOW","MOSS","OAK","ORCHARD","PETAL","PINE","POLLEN","ROOT","SPROUT","STEM","SUNFLOWER","TULIP","VINE","WILLOW","SOIL","DIRT","RAIN","SUMMER","SPRING","TREE","KERNEL","TROWEL","SHOVEL"],
   text:"Small enough to lose in a crease of your palm,\npatient enough to outwait you.\nIt asks for dirt and dark and the long odds,\nand keeps, folded inside it,\nan entire summer it has never seen."},
- {word:"DOOR",kind:"a quip",near:["DOOR","HINGE","HOUSE","WINDOW","GUARD"],
+ {word:"DOOR",kind:"a quip",near:["HINGE","HOUSE","WINDOW","GUARD","ATTIC","CELLAR","CLOSET","CURTAIN","DOORWAY","FOYER","HALLWAY","KEY","LATCH","LOCK","KNOB","GATE","WALL","HALL","THRESHOLD","PORCH","ROOM","ARCH","KNOCK","BELL","SHUTTER","PARLOR","PANTRY","MANSION","BALCONY","FENCE","PATH"],
   text:"Every wall is just a door that gave up.\nMost of the ones you feared were never locked.\nYou only had to lean."},
- {word:"ROOT",kind:"a poem",near:["FOREST","STONE","CEDAR","MAPLE","FIELD","SEED"],
+ {word:"ROOT",kind:"a poem",near:["FOREST","STONE","CEDAR","MAPLE","FIELD","SEED","ACORN","ASH","ASPEN","BEECH","BIRCH","BRANCH","CAVE","CAVERN","CELLAR","CHESTNUT","DEPTH","ELM","FIR","FOSSIL","GARLIC","GINGER","MEADOW","MINERAL","MOLE","OAK","ONION","ORCHARD","PEBBLE","PINE","RADISH","RESIN","SPRUCE","SYCAMORE","TUNNEL","TURNIP","WALNUT","WILLOW","WORM","SOIL","DIRT","CLAY","EARTH","TRUNK","BARK","ANCHOR","BURROW"],
   text:"The tree you admire is the smaller half.\nThe rest is downward - gripping the dark,\ndrinking from stones -\nall the work that holds the green aloft\ndone where no one thinks to look."},
- {word:"RIVER",kind:"a poem",near:["RIVER","OCEAN","TIDE","SHORE","STONE","CANYON","VALLEY"],
+ {word:"RIVER",kind:"a poem",near:["OCEAN","TIDE","SHORE","STONE","CANYON","VALLEY","BASIN","BRIDGE","BROOK","CREEK","CURRENT","DELTA","ESTUARY","FERRY","GEYSER","GLACIER","HERON","INLET","OTTER","PEBBLE","PIER","SALMON","TROUT","WATER","FLOW","SOURCE","STREAM","SPRING","RAFT","PADDLE","BEAVER","REED","MARSH","MOSS","RAIN"],
   text:"It is the same river and never the same water.\nThat is the whole secret, and you are like it:\na shape the going keeps,\na name we give to something\nthat refuses, gloriously, to stay."},
- {word:"EMBER",kind:"a poem",near:["BLAZE","SMOKE","STOVE","CANDLE"],
+ {word:"EMBER",kind:"a poem",near:["BLAZE","SMOKE","STOVE","CANDLE","ASH","CHIMNEY","CINDER","FIREFLY","FLICKER","GLOW","HEARTH","LANTERN","MANTEL","SCORCH","SHIMMER","TORCH","TWINKLE","FIRE","FLAME","SPARK","COAL","FURNACE","FORGE","BONFIRE","SOOT","KETTLE","TINDER","LOG"],
   text:"After the blaze decides it is done,\nthis is what keeps its mind:\na low red argument in the ash,\nready, if you lean close and breathe,\nto remember the whole fire."},
- {word:"NEST",kind:"a small story",near:["RAVEN","EAGLE","TWINE"],
+ {word:"NEST",kind:"a small story",near:["RAVEN","EAGLE","TWINE","BRANCH","CANARY","CRANE","CROW","DOVE","FEATHER","FINCH","HAWK","HERON","OSPREY","PARROT","PELICAN","PERCH","PIGEON","QUAIL","RIBBON","ROBIN","SPARROW","SWALLOW","THREAD","WREN","EGG","BIRD","WING","STRING","STRAW","BEAK","OWL","HATCH","CHICK","MOSS","TWIG","LEAF","SHELTER","HOME"],
   text:"They build it from whatever the wind left lying around -\nstring, a lost ribbon, the soft inside of something that failed.\nNothing in it was made for the job.\nAnd yet it holds, just long enough,\nthe only thing it was ever for."},
- {word:"TRUTH",kind:"a quip",near:["TRUST","RIDDLE","GHOST","MIRROR"],
+ {word:"TRUTH",kind:"a quip",near:["TRUST","RIDDLE","GHOST","MIRROR","DOUBT","FAITH","JIGSAW","LEGEND","PUZZLE","SWORE","SECRET","ANSWER","QUESTION","PROOF","CLUE","WITNESS","OATH","FACT","HONEST","LIE","RUMOR","WHISPER","SHADOW","LIGHT","LAMP","GLASS","JUDGE","TRIAL","LENS","COMPASS"],
   text:"It rarely shouts.\nIt waits - the way a step you missed in the dark waits:\npatient, exact,\nand entirely unimpressed by what you'd prefer."}
 ];
+/* Stamp of the word bank + themes: a saved game only resumes if the generator inputs are unchanged. */
+const BANK_SIG="v2|"+BANK.length+"|"+PAYOFFS.reduce((s,p)=>s+p.near.length,0);
+function choosePayoff(){const mf=MOODFILTER?PAYOFFS.filter(p=>MOODFILTER.indexOf(p.word)>=0):PAYOFFS;const pool=mf.length?mf:PAYOFFS;return pool[(RNG()*pool.length)|0];}
+function themeSets(payoff){return {prefer:new Set((payoff.near||[]).filter(w=>w!==payoff.word)),avoid:new Set([payoff.word])};}
 
-function extendPuzzle(P){
+function extendPuzzle(P,payoff){
   const V=P.solid.V, F=P.solid.F;
   const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
   const cen=f=>{const c=[0,0,0];f.forEach(vi=>{for(let k=0;k<3;k++)c[k]+=V[vi][k]/3;});return c;};
-  const used=new Set(P.edges.map(e=>e.word));
-  const _mf=(typeof MOODFILTER!=='undefined'&&MOODFILTER)?PAYOFFS.filter(p=>MOODFILTER.indexOf(p.word)>=0):PAYOFFS;
-  const _pool=_mf.length?_mf:PAYOFFS;
-  const payoff=_pool[(RNG()*_pool.length)|0];P.payoff=payoff;P.coreWord=payoff.word;
-  const prefer=new Set(payoff.near||[]);
-  const bset=()=>{const a=_shuf(BANK);a.sort((x,y)=>(prefer.has(y.word)?1:0)-(prefer.has(x.word)?1:0));return a;};
+  P.payoff=payoff;P.coreWord=payoff.word;
+  const {prefer,avoid}=themeSets(payoff);
+  const used=new Set([...P.edges.map(e=>e.word),...avoid]);
+  // candidate order: theme words, then the rest, plain plurals last (stable, so it stays shuffled within tiers)
+  const rank=w=>prefer.has(w.word)?0:(PLURAL.has(w.word)?2:1);
+  const bset=()=>{const a=_shuf(BANK);a.sort((x,y)=>rank(x)-rank(y));return a;};
   const byPair={};for(const e of BANK){const k=[e.word[0],e.word[e.word.length-1]].sort().join('');(byPair[k]=byPair[k]||[]).push(e);}
-  const findPair=(la,lb)=>{const list=_shuf(byPair[[la,lb].sort().join('')]||[]);for(const w of list)if(!used.has(w.word)){used.add(w.word);return w;}return null;};
-  const findAny=()=>{for(const w of bset())if(!used.has(w.word)){used.add(w.word);return w;}return null;};
-  const findCore=(X)=>{for(const w of bset()){if(used.has(w.word))continue;if(w.word[w.word.length-1]===X){used.add(w.word);return w;}}return null;};
+  // interior words sit on shorter runs than edges (a face chord bulges inward; a spoke is one radius long),
+  // so cap their length to keep the letter chips legible
+  const FACE_MAX=8,SPOKE_MAX=7;
+  const findPair=(la,lb)=>{const list=_shuf(byPair[[la,lb].sort().join('')]||[]);list.sort((x,y)=>rank(x)-rank(y));for(const w of list)if(!used.has(w.word)&&w.word.length<=FACE_MAX){used.add(w.word);return w;}return null;};
+  const findAny=()=>{for(const w of bset())if(!used.has(w.word)&&w.word.length<=SPOKE_MAX){used.add(w.word);return w;}return null;};
+  const findCore=(X)=>{for(const w of bset()){if(used.has(w.word)||w.word.length>SPOKE_MAX)continue;if(w.word[w.word.length-1]===X){used.add(w.word);return w;}}return null;};
   // Face words must connect on BOTH ends to real cells — a corner, or a letter on one of the
   // face's edges (the word "strings from the edges"). No floating phantom endpoints.
   const _ek=(a,b)=>Math.min(a,b)+"_"+Math.max(a,b);
@@ -482,7 +540,7 @@ function extendPuzzle(P){
   const findFaceWord=(an)=>{const cor=an.filter(x=>x.group[0]==='v'),edg=an.filter(x=>x.group[0]==='e');
     for(const tier of [_facePairs(cor,cor),_facePairs(cor,edg),_facePairs(edg,edg)])
       for(const [a,b] of tier){const w=findPair(a.letter,b.letter);
-        if(w){let A=a,B=b;if(w.word[0]!==a.letter){A=b;B=a;}return {word:w.word,clue:w.clue,A,B};}}
+        if(w){let A=a,B=b;if(w.word[0]!==a.letter){A=b;B=a;}return {word:w.word,clue:pickClue(w),A,B};}}
     return null;};
   P.faceWords=F.map((f,fi)=>{
     const G=cen(f);const built=findFaceWord(faceAnchors(f));
@@ -504,7 +562,7 @@ function extendPuzzle(P){
   let _tot=_cands.reduce((s,k)=>s+endCnt[k],0),_r=RNG()*_tot,X=_cands[0]||'E';
   for(const k of _cands){_r-=endCnt[k];if(_r<=0){X=k;break;}}
   P.coreLetter=X;
-  const findSE=(a,b)=>{for(const w of bset()){if(used.has(w.word))continue;if(w.word[0]===a&&w.word[w.word.length-1]===b){used.add(w.word);return w;}}return null;};
+  const findSE=(a,b)=>{for(const w of bset()){if(used.has(w.word)||w.word.length>SPOKE_MAX)continue;if(w.word[0]===a&&w.word[w.word.length-1]===b){used.add(w.word);return w;}}return null;};
   const qbez=(A,Cc,O,t)=>{const u=1-t;return [u*u*A[0]+2*u*t*Cc[0]+t*t*O[0],u*u*A[1]+2*u*t*Cc[1]+t*t*O[1],u*u*A[2]+2*u*t*Cc[2]+t*t*O[2]];};
   P.spokeWords=F.map((f,fi)=>{
     const G=cen(f),O=[0,0,0];const Cc=[G[0]*1.25,G[1]*1.25,G[2]*1.25];
@@ -516,29 +574,15 @@ function extendPuzzle(P){
         if(k===0)cells.push({kind:'v',v:cornerV,p3:A,letter:word[0]});
         else if(k===L-1)cells.push({kind:'core',p3:O,letter:word[L-1]});
         else cells.push({kind:'sc',key:'S'+fi+'_'+k,p3,letter:word[k]});}
-      return {layer:'spoke',face:fi,word,clue:chosen.clue,len:L,cells,cornerV,connected:true,num:'C'+(fi+1)};
+      return {layer:'spoke',face:fi,word,clue:pickClue(chosen),len:L,cells,cornerV,connected:true,num:'C'+(fi+1)};
     }
     const w=findCore(X)||findAny();const word=w.word,L=word.length;
     for(let k=0;k<L;k++){const t=k/(L-1);const p3=qbez(G,Cc,O,t);
       if(k===L-1)cells.push({kind:'core',p3:O,letter:word[k]});
       else cells.push({kind:'sc',key:'S'+fi+'_'+k,p3,letter:word[k]});}
-    return {layer:'spoke',face:fi,word,clue:w.clue,len:L,cells,connected:false,num:'C'+(fi+1)};
+    return {layer:'spoke',face:fi,word,clue:pickClue(w),len:L,cells,connected:false,num:'C'+(fi+1)};
   });
   return P;
-}
-function makePoem(P){
-  const ws=allWords(P).map(w=>w.word.toLowerCase());const pool=_shuf(ws.filter(w=>w.length>=3));
-  let i=0;const pick=()=>pool[(i++)%pool.length];
-  return [
-    "I kept a "+pick()+" where the "+pick()+" should be,",
-    "and called it "+pick()+".",
-    "Every "+pick()+" was a door I mistook for a wall,",
-    "every "+pick()+" a key I mistook for a "+pick()+".",
-    "Follow the "+pick()+" down past the "+pick()+",",
-    "past the "+pick()+" and the patient "+pick()+",",
-    "and you arrive, at last, at the "+pick()+":",
-    "the small bright "+pick()+" that held the whole thing open."
-  ].join("\n");
 }
 /* ============================================================
    3D RUMI — layered dig: edges -> faces -> core (+ prize)
@@ -567,9 +611,9 @@ let projCells=[],focusAnim=null;
 let timer=0,tick=null,started=false,won=false;
 let assists=0,revealedAll=false;   // letters handed out by Hint / Reveal corner; Reveal-all skips records
 let mode="practice",dailyKey=null,dailySeed=null;
+let seed=0,genId=0,MOODIDX=-1;   // every puzzle (daily or free play) is seeded, so it can be rebuilt on resume
 let FOCUS=true;
 let particles=[],doneSet=new Set(),coreEnergy=0,winFlash=0,corePulse=0;
-let KEYIN=null,lastTouch=false;
 const touchDevice=("ontouchstart" in window)||((navigator.maxTouchPoints||0)>0);
 const $=id=>document.getElementById(id);
 function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
@@ -583,21 +627,49 @@ function buildKbd(){const host=$("kbd");if(!host||host.dataset.built)return;host
   const r4=document.createElement("div");r4.className="krow";r4.appendChild(mkKey("‹ word","pv"));r4.appendChild(mkKey("face it","sp"));r4.appendChild(mkKey("word ›","nx"));host.appendChild(r4);}
 function showKbd(){buildKbd();const h=$("kbd");if(h){h.classList.add("show");document.body.classList.add("kbdopen");}}
 function hideKbd(){const h=$("kbd");if(h){h.classList.remove("show");document.body.classList.remove("kbdopen");}}
-function newPuzzle(){
+/* Build a puzzle. `resume` is a saved-game record: the same seed rebuilds the same puzzle and the
+   saved letters, timer and assists are laid back on top. */
+async function newPuzzle(resume){
+  const myGen=++genId;
   won=false;started=false;clearInterval(tick);timer=0;$("timer").textContent="0:00";assists=0;revealedAll=false;
   particles=[];doneSet=new Set();coreEnergy=0;winFlash=0;
+  if(!resume){seed=(mode==="daily")?dailySeed:((Math.random()*4294967296)>>>0);store.game=null;persist();}
   $("spinner").classList.add("show");
-  setTimeout(()=>{
-    RNG=(mode==="daily")?mulberry32(dailySeed):Math.random;
-    let p=null,g=0;do{p=buildPuzzle(sizeName);g++;}while(!p&&g<4);
-    P=p||buildPuzzle("octa");extendPuzzle(P);precompute(P);
-    RNG=Math.random;
-    sel={word:P.edges[0],cellIdx:0};
-    view.yaw=0.6;view.pitch=-0.5;view.auto=true;view.idle=0;
-    buildClues();updateHud();$("spinner").classList.remove("show");setSel(P.edges[0],firstEmpty(P.edges[0]));
-    focusWord(P.edges[0],false);resize();if(touchDevice)showKbd();
-  },40);
+  RNG=mulberry32(seed);
+  const payoff=choosePayoff();const {prefer,avoid}=themeSets(payoff);const stale=()=>genId!==myGen;
+  let p=null;
+  try{
+    let g=0;do{p=await buildPuzzle(sizeName,prefer,avoid,stale);g++;}while(!p&&g<4&&!stale());
+    if(stale())return;
+    if(!p){p=await buildPuzzle("octa",prefer,avoid,stale);if(!p||stale())return;}
+    extendPuzzle(p,payoff);
+  }catch(err){console.error("puzzle generation failed",err);$("spinner").classList.remove("show");RNG=Math.random;return;}
+  P=p;precompute(P);   // precompute reads the live puzzle through vpos(), so assign first
+  RNG=Math.random;
+  if(resume){
+    (resume.v||[]).forEach((ch,i)=>{if(P.vertices[i])P.vertices[i].cur=ch||"";});
+    P._cur=Object.assign({},resume.i||{});P.coreCur=resume.core||"";
+    timer=resume.timer||0;assists=resume.assists||0;revealedAll=!!resume.revealedAll;$("timer").textContent=fmt(timer);
+    if(timer>0)markStart();
+  }
+  view.yaw=0.6;view.pitch=-0.5;view.auto=true;view.idle=0;
+  const first=(resume&&resume.sel&&allWords(P).find(w=>selectable(w)&&w.layer+w.num===resume.sel))||P.edges[0];
+  sel={word:first,cellIdx:0};
+  buildClues();updateHud();$("spinner").classList.remove("show");setSel(first,firstEmpty(first));
+  focusWord(first,false);resize();if(touchDevice)showKbd();
+  saveGame();
 }
+/* ---------- save / resume ---------- */
+function saveGame(){if(!P||won){store.game=null;persist();return;}
+  // shape = the shape that was REQUESTED (not P.name): the seed must replay the same generation path
+  store.game={ver:1,sig:BANK_SIG,seed,shape:sizeName,mode,dailyKey,mood:MOODIDX,timer,assists,revealedAll,
+    v:P.vertices.map(v=>v.cur),i:P._cur,core:P.coreCur,sel:sel.word?sel.word.layer+sel.word.num:null};
+  persist();}
+function resumeGame(){const g=store.game;if(!g||g.ver!==1||g.sig!==BANK_SIG||!SIZES[g.shape])return false;
+  mode=g.mode==="daily"?"daily":"practice";sizeName=g.shape;dailyKey=g.dailyKey||null;dailySeed=mode==="daily"?g.seed:null;
+  MOODIDX=(typeof g.mood==="number")?g.mood:-1;MOODFILTER=(MOODIDX>=0&&MOODS[MOODIDX])?MOODS[MOODIDX].words:null;
+  seed=g.seed>>>0;const ss=$("sizeSel");if(ss)ss.value=sizeName;
+  newPuzzle(g);return true;}
 
 /* ---------- precompute (face/edge colors, adjacency) ---------- */
 function precompute(P){
@@ -856,9 +928,9 @@ function hit(x,y){let best=null,bd=1e9;for(const pc of projCells){const d=Math.h
   setSel(pick.w,pick.i);
 }
 function typeLetter(ch){if(won||!sel.word||!selectable(sel.word))return;setCur(P,sel.word.cells[sel.cellIdx],ch);
-  sel.cellIdx=Math.min(sel.cellIdx+1,sel.word.cells.length-1);updateClues();markStart();if(solved(P))winNow();}
-function markStart(){if(!started){started=true;tick=setInterval(()=>{timer++;$("timer").textContent=fmt(timer);},1000);}}
-function backspace(){if(won||!sel.word)return;const w=sel.word;if(getCur(P,w.cells[sel.cellIdx]))setCur(P,w.cells[sel.cellIdx],"");else{sel.cellIdx=Math.max(0,sel.cellIdx-1);setCur(P,w.cells[sel.cellIdx],"");}updateClues();}
+  sel.cellIdx=Math.min(sel.cellIdx+1,sel.word.cells.length-1);updateClues();markStart();if(solved(P))winNow();else saveGame();}
+function markStart(){if(!started){started=true;tick=setInterval(()=>{timer++;$("timer").textContent=fmt(timer);if(timer%15===0)saveGame();},1000);}}
+function backspace(){if(won||!sel.word)return;const w=sel.word;if(getCur(P,w.cells[sel.cellIdx]))setCur(P,w.cells[sel.cellIdx],"");else{sel.cellIdx=Math.max(0,sel.cellIdx-1);setCur(P,w.cells[sel.cellIdx],"");}updateClues();saveGame();}
 function moveCell(d){if(!sel.word)return;sel.cellIdx=Math.max(0,Math.min(sel.word.cells.length-1,sel.cellIdx+d));view.idle=0;}
 function nextWord(d){const list=selectableList();if(!list.length)return;let i=list.indexOf(sel.word);if(i<0)i=0;const n=(i+d+list.length)%list.length;const w=list[n];setSel(w,firstEmpty(w));focusWord(w);}
 
@@ -889,12 +961,12 @@ function updateClues(){
 /* ---------- check / hint / reveal ---------- */
 function check(){checkFlash=true;setTimeout(()=>checkFlash=false,1200);}
 function hint(){if(won||!sel.word||!selectable(sel.word))return;markStart();
-  for(const c of sel.word.cells){if(getCur(P,c)!==c.letter){setCur(P,c,c.letter);assists++;break;}}updateClues();if(solved(P))winNow();}
+  for(const c of sel.word.cells){if(getCur(P,c)!==c.letter){setCur(P,c,c.letter);assists++;break;}}updateClues();if(solved(P))winNow();else saveGame();}
 function revealCorner(){if(won)return;
   // prefer an unsolved corner of the word you're on, then any unsolved corner
   const onWord=sel.word?sel.word.cells.filter(c=>c.kind==='v').map(c=>P.vertices[c.v]).find(v=>v.cur!==v.sol):null;
   const v=onWord||P.vertices.find(v=>v.cur!==v.sol);
-  if(v){markStart();v.cur=v.sol;assists++;updateClues();if(solved(P))winNow();}}
+  if(v){markStart();v.cur=v.sol;assists++;updateClues();if(solved(P))winNow();else saveGame();}}
 function reveal(){if(won)return;if(!confirm("Reveal everything? (skips the dig — no time or streak is recorded)"))return;revealedAll=true;
   for(const w of [...P.edges,...P.faceWords,...P.spokeWords])for(const c of w.cells)setCur(P,c,c.letter);updateClues();winNow();}
 
@@ -904,7 +976,7 @@ function winNow(){if(won)return;won=true;clearInterval(tick);view.auto=true;view
   // records: only clean solves (no hints, no reveal) set a best time; reveal-all records nothing
   const clean=!revealedAll&&assists===0;const prevBest=store["best_"+sizeName];const newBest=clean&&(!prevBest||timer<prevBest);
   if(newBest)store["best_"+sizeName]=timer;
-  const isD=mode==="daily";if(isD)recordDaily();persist();confetti();
+  const isD=mode==="daily";if(isD)recordDaily();store.game=null;persist();confetti();
   setTimeout(()=>{
     const st=currentStreak();
     const badge=isD?`<p class="s2" style="color:var(--cyan)">◆ Daily · ${dailyDateStr(dailyKey)}${(!revealedAll&&st>1?` · 🔥 ${st}-day streak`:"")}</p>`:"";
@@ -968,11 +1040,11 @@ function buildControls(){const s=$("sizeSel");s.innerHTML="";
   const bi=$("btnIntent");if(bi)bi.onclick=showIntro;
   const bh=$("btnHelp");if(bh)bh.onclick=()=>showTutorial(true);}
 function wireCanvas(){
-  cv.addEventListener("mousedown",e=>{lastTouch=false;const r=cv.getBoundingClientRect();onDown(e.clientX-r.left,e.clientY-r.top);});
+  cv.addEventListener("mousedown",e=>{const r=cv.getBoundingClientRect();onDown(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener("mousemove",e=>{const r=cv.getBoundingClientRect();onMove(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener("mouseup",e=>{const r=cv.getBoundingClientRect();onUp(e.clientX-r.left,e.clientY-r.top);});
   let _pinch=null;const _td=e=>{const a=e.touches[0],b=e.touches[1];return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);};
-  cv.addEventListener("touchstart",e=>{lastTouch=true;const r=cv.getBoundingClientRect();
+  cv.addEventListener("touchstart",e=>{const r=cv.getBoundingClientRect();
     if(e.touches.length>=2){_pinch=_td(e);}else{const t=e.touches[0];onDown(t.clientX-r.left,t.clientY-r.top);}e.preventDefault();},{passive:false});
   cv.addEventListener("touchmove",e=>{const r=cv.getBoundingClientRect();
     if(e.touches.length>=2&&_pinch){const d=_td(e);if(d>0){setZoom(view.zoom*(d/_pinch));_pinch=d;}}
@@ -1031,7 +1103,7 @@ function startFromTutorial(){store.seenTutorial=true;persist();$("tutOverlay").c
 function closeTutorial(){$("tutOverlay").classList.remove("show");}
 function showIntro(){hideKbd();renderDailyBlock();const c=$("moodBtns");if(c){c.innerHTML="";MOODS.forEach(m=>{const b=document.createElement("button");b.className="moodbtn";b.textContent=m.label;b.onclick=()=>pickMood(m);c.appendChild(b);});}
   const ln=$("introLine");if(ln)ln.textContent="";$("introOverlay").classList.add("show");}
-function pickMood(m){mode="practice";MOODFILTER=m.words;const ln=$("introLine");if(ln)ln.textContent=m.line;
+function pickMood(m){mode="practice";MOODFILTER=m.words;MOODIDX=MOODS.indexOf(m);const ln=$("introLine");if(ln)ln.textContent=m.line;
   document.querySelectorAll("#moodBtns .moodbtn").forEach(b=>b.disabled=true);
   setTimeout(()=>{$("introOverlay").classList.remove("show");newPuzzle();},950);}
 
@@ -1039,7 +1111,7 @@ function pickMood(m){mode="practice";MOODFILTER=m.words;const ln=$("introLine");
 function todaySeed(){const k=_dayKey();const s=_hseed(k);return {key:k,seed:s,shape:dailyShapeForSeed(s)};}
 function dailyDateStr(k){const y=Math.floor(k/10000),m=Math.floor(k/100)%100,d=k%100;
   const mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]||m;return mo+" "+d+", "+y;}
-function startDaily(){const t=todaySeed();mode="daily";dailyKey=t.key;dailySeed=t.seed;sizeName=t.shape;MOODFILTER=null;
+function startDaily(){const t=todaySeed();mode="daily";dailyKey=t.key;dailySeed=t.seed;sizeName=t.shape;MOODFILTER=null;MOODIDX=-1;
   const ss=$("sizeSel");if(ss)ss.value=sizeName;store.size=sizeName;
   $("introOverlay").classList.remove("show");newPuzzle();}
 /* A streak only counts while it's alive: last solve was today or yesterday. */
@@ -1068,13 +1140,10 @@ function renderDailyBlock(){const el=$("dailyBlock");if(!el)return;const t=today
     '<button class="btn primary dbig" onclick="startDaily()">Play today’s puzzle →</button>'+streakHtml+'</div>';}}
 
 function boot(){if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").then(function(r){if(r&&r.update)r.update();}).catch(()=>{});if(navigator.serviceWorker.controller)navigator.serviceWorker.addEventListener("controllerchange",function(){if(window.__rr)return;window.__rr=1;location.reload();});}catch(e){}}
-  KEYIN=document.createElement("input");KEYIN.id="rumiKeyIn";KEYIN.type="text";KEYIN.tabIndex=-1;
-  KEYIN.setAttribute("autocomplete","off");KEYIN.setAttribute("autocorrect","off");KEYIN.setAttribute("autocapitalize","characters");KEYIN.setAttribute("spellcheck","false");KEYIN.setAttribute("inputmode","text");KEYIN.setAttribute("aria-hidden","true");
-  KEYIN.style.cssText="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:0;padding:0;margin:0;font-size:16px;background:transparent;color:transparent;caret-color:transparent;z-index:-1";
-  document.body.appendChild(KEYIN);
-  KEYIN.addEventListener("input",function(){const v=KEYIN.value,ch=v.slice(-1);if(/[a-zA-Z]/.test(ch))typeLetter(ch.toUpperCase());KEYIN.value="";});
-  KEYIN.addEventListener("keydown",function(e){if(e.key==="Backspace"){backspace();e.preventDefault();}});
-  cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();if(store.seenTutorial){showIntro();}else{showTutorial(false);}}
+  cv=$("scene");ctx=cv.getContext("2d");resize();wireCanvas();buildControls();window.addEventListener("resize",resize);render();
+  window.addEventListener("pagehide",saveGame);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveGame();});
+  if(resumeGame())return;
+  if(store.seenTutorial){showIntro();}else{showTutorial(false);}}
 boot();
 
 
