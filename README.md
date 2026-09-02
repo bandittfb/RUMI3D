@@ -6,13 +6,14 @@ It's a single self-contained HTML file. No build, no dependencies, no network. O
 
 ## How it plays
 
-RUMI 3D is a three-layer dig:
+RUMI 3D is a three-layer dig, and a color-mixing one:
 
 1. **Edges** — solve the words on the cage of the solid. Shared corners hand letters to their neighbors, just like a flat crossword, but wrapped around a shape you can spin.
-2. **Faces** — once a face's three edges are solved, a word stretches across it, hung off corners you already filled. The face lights up in its color.
-3. **The core** — each solved face releases a *spoke* word that grows from a corner and drives inward. Every spoke converges on the same hidden letter at the center.
+2. **Faces** — every face carries one of three pigments: **cyan, magenta or yellow**. Once a face's three edges are solved, a word stretches across it, hung off corners you already filled. Solve it and the face lights up in its pigment. Edges between two different pigments mix (cyan and magenta make blue, and so on).
+3. **Spokes** — a few faces, always covering all three pigments, send a *spoke* word diving from a corner to the **ring** at the center. Each spoke's last letter lands in one slot of the ring and carries its face's pigment inward. The paper at the center tints as pigments arrive.
+4. **The center** — when all three pigments are in, they make **ink**, and the ring is yours: the spokes have spelled most of the word that every other word was circling, and you decode the rest.
 
-Reach the center and it **decodes** into the thing all those words were circling — a short authored poem, quip, or tiny story. The words on the surface are drawn from that theme, so the reveal is something the puzzle was quietly pointing at.
+Then the reward: a short authored poem, quip, or tiny story. The words on the surface are drawn from that theme, so the reveal is something the puzzle was quietly pointing at.
 
 Before each puzzle, RUMI asks what you're bringing to the center; your answer shapes which reward waits there.
 
@@ -37,13 +38,13 @@ Five all-triangle solids (the deltahedron family), from quick to epic:
 
 | Shape | Faces | Edges | Words |
 |-------|------:|------:|------:|
-| Tetra | 4 | 6 | 14 |
-| Hexa  | 6 | 9 | 21 |
-| Octa  | 8 | 12 | 28 |
-| Deca  | 10 | 15 | 35 |
-| Icosa | 20 | 30 | 70 |
+| Tetra | 4 | 6 | 14–15 |
+| Hexa  | 6 | 9 | 19–20 |
+| Octa  | 8 | 12 | 24–25 |
+| Deca  | 10 | 15 | 29–30 |
+| Icosa | 20 | 30 | 54–55 |
 
-Words = edges + one face word per face + one spoke word per face.
+Words = edges + one face word per face + 3 or 4 spokes + the center ring.
 
 ## Running it
 
@@ -56,7 +57,7 @@ Words = edges + one face word per face + one spoke word per face.
 Everything lives in `index.html`:
 
 - `RAW` is the word bank: `["WORD","Clue"]` pairs. The same word may appear more than once with different clues; all of its clues are kept and one is drawn per puzzle.
-- `PAYOFFS` holds the center rewards. Each has a `near` list, the theme words the puzzle is built from. Keep those lists long (30+) and drawn from `RAW`.
+- `PAYOFFS` holds the center rewards. Each has a `near` list, the theme words the puzzle is built from. Keep those lists long (30+) and drawn from `RAW`. Payoff words should be 4 or 5 letters, and avoid letters that few words end in (I, U, V) since spokes must end on them.
 - `MOODS` maps the intent buttons to payoff words.
 
 ## Credits

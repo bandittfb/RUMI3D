@@ -134,6 +134,10 @@
   #clueList li.locked{opacity:.38}
   #stageLine,#bestLine{font-size:11px;letter-spacing:1px;color:var(--muted);font-weight:600}
   #bestLine{color:var(--gold);text-transform:none}
+  .pig{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:4px;vertical-align:middle;background:currentColor;opacity:.22}
+  .pig.on{opacity:1;box-shadow:0 0 7px currentColor}
+  .tutcard .pigdiag{display:flex;align-items:center;gap:12px;margin:0 0 12px;font-size:12.5px;color:var(--muted);line-height:1.45}
+  .tutcard .pigdiag svg{flex-shrink:0}
   .card .poem{font-style:italic;line-height:1.65;color:#e2e6ff;font-size:14px;margin:14px 2px;text-align:left;white-space:normal}
 
   .zoomctl{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:4}
@@ -251,8 +255,73 @@ const RAW = [
  ["EGG","Nest's contents"],["BIRD","Feathered flyer"],["WING","Flight limb"],["STRING","Thin cord"],["STRAW","Dry stalks"],["BEAK","Bird's bill"],
  ["OWL","Night hooter"],["HATCH","Break from the egg"],["CHICK","Baby bird"],["SECRET","Kept hidden"],["ANSWER","Reply"],["QUESTION","Asked thing"],
  ["BLUSH","Cheeks' red"],["PASSION","Intense feeling"],["ACHE","Dull pain"],["LOG","Fireplace fuel"],
- ["PROOF","Evidence"],["CLUE","Helpful hint"],["WITNESS","One who saw"],["OATH","Solemn promise"],["FACT","Verified thing"],["HONEST","Truthful"],
- ["LIE","Untruth"],["RUMOR","Unverified talk"],["JUDGE","Court decider"],["TRIAL","Court case"],["FLOW","Steady movement"],["SOURCE","Where it begins"],
+ ["PROOF","What a claim needs"],["CLUE","Helpful hint"],["WITNESS","One who saw it happen"],["OATH","Solemn promise"],["FACT","Verified thing"],["HONEST","Unable to fib"],
+ ["LIE","Fib with intent"],["RUMOR","Unverified talk"],["JUDGE","Court decider"],["TRIAL","Court case"],["FLOW","Steady movement"],["SOURCE","Where it begins"],
+ ["ANSWER","Reply to a question"],
+ // fuller clues for words that only had a one-word definition
+ ["CABLE","Thick wire behind the TV"],["SCREEN","Where the movie appears"],["SIGNAL","Bars on your phone"],["FLOWER","Bee's landing pad"],["PHONE","It rings in your pocket"],
+ ["RIDE","Turn on the carousel"],["ABODE","Humble dwelling"],["OXIDE","Rust, chemically"],["GRIME","Grease and dirt"],["SOUND","What ears catch"],["SLOPES","Ski runs"],
+ ["SPACES","Blanks between words"],["SHORES","Where waves end"],["SPICES","Cinnamon and cumin"],["TABLES","Dinner surfaces"],["TRADES","Plumbing and carpentry"],
+ ["TRAILS","Hiking routes"],["TREATS","Halloween haul"],["ECHOES","Canyon replies"],["EDGES","Where the map ends"],["TONE","Voice's mood"],["PLACE","Spot on the map"],
+ ["LARGE","Size above medium"],["STORE","Corner shop"],["CURVE","Road's bend"],["CHART","Bars and pies"],["VESSEL","Ship, or a vein"],["FABRIC","Bolt of cotton"],
+ ["ZERO","Nil"],["TOTAL","Bill's bottom line"],["HOUSE","Roof, walls and a mortgage"],["GHOST","Sheet with eyeholes"],["SWORD","Knight's blade"],["MAGIC","Rabbit-from-a-hat craft"],
+ ["TALE","Bedtime story"],["THEME","Party's motif"],["ARENA","Gladiator's ring"],["RULE","Thumb's guideline"],["RAGE","Red-faced fury"],["SALE","Half-price event"],
+ ["CLOSE","Shut the door"],["DODGE","Sidestep a ball"],["MERGE","Join lanes"],["STOVE","Kitchen's burners"],["WASTE","Let it go unused"],["FOCUS","Camera's sharpness"],
+ ["SPLIT","Banana ___"],["VIGOR","Get-up-and-go"],["ROUND","Like a wheel"],["SHORE","Where the beach meets the sea"],["SPARE","Tire in the trunk"],["WAVER","Hesitate mid-step"],
+ ["SOLACE","Comfort in grief"],["MIRTH","Belly-laugh feeling"],["COURAGE","The lion's missing quality, in Oz"],["FAITH","Belief without proof"],["DOUBT","Shadow of a maybe"],
+ ["WONDER","Wide-eyed awe"],["TENDER","Gentle, or a good steak"],["KINGDOM","Realm with a crown"],["NORSE","Like Odin and Thor"],["RARE","Steak still red inside"],
+ ["TRIBE","Extended clan"],["SINGER","One at the mic"],["SUGAR","Sweet crystals"],["BLACK","Color of ink"],["NOMAD","Tent-to-tent wanderer"],["DOCTOR","One who takes your pulse"],
+ // words ending in the letters spokes need most (O, M, B, C, P, W, K, A)
+ ["HERO","Cape wearer"],["ECHO","Canyon's reply"],["HALO","Angel's ring"],["CARGO","Ship's load"],["BINGO","Hall game with cards"],["MOTTO","Family saying"],["RHINO","Horned charger"],
+ ["DISCO","Mirror-ball era"],["LASSO","Cowboy's loop"],["PATIO","Backyard slab"],["MEMO","Office note"],["LOGO","Brand's mark"],["SOLO","Alone on stage"],["TRIO","Group of three"],
+ ["JUMBO","Elephant-sized"],["TEMPO","Song's speed"],["CAMEO","Brief film appearance"],["GUMBO","Louisiana stew"],["LIMBO","How low can you go"],["COMBO","Meal deal"],
+ ["BISTRO","Small French eatery"],["VOLCANO","Lava spout"],["TORNADO","Twister"],["BUFFALO","Prairie herd animal"],["AUDIO","Sound track"],["VIDEO","Moving pictures"],
+ ["RATIO","Three to one, say"],["CASINO","Slot machine hall"],["TOMATO","Ketchup's base"],["POTATO","Spud"],["BAMBOO","Panda's meal"],["IGLOO","Snow-block home"],
+ ["TATTOO","Ink you keep"],["SHAMPOO","Hair wash"],["KAZOO","Buzzing toy horn"],["CUCKOO","Clock bird"],["CHARM","Bracelet dangle"],["LOOM","Weaver's frame"],["GLOOM","Low mood"],
+ ["BROOM","Witch's ride"],["TOTEM","Carved pole"],["DENIM","Jeans cloth"],["REALM","Kingdom"],["CUSTOM","Local habit"],["SYSTEM","Organized whole"],["MUSEUM","Hall of exhibits"],
+ ["PODIUM","Winner's stand"],["STADIUM","Roaring bowl"],["ALBUM","Photo book"],["STEAM","Kettle's breath"],["GLEAM","Faint shine"],["CHASM","Deep split"],["VENOM","Snake's dose"],
+ ["RANDOM","Without pattern"],["WISDOM","Owl's reputation"],["FREEDOM","Open door's gift"],["BOTTOM","Lowest point"],["AXIOM","Self-evident truth"],["IDIOM","Turn of phrase"],
+ ["PHANTOM","Opera ghost"],["CALM","Still water"],["PALM","Hand's flat side"],["BALM","Soothing salve"],["HELM","Ship's wheel"],["FILM","Cinema reel"],["WARM","Like fresh toast"],
+ ["FARM","Barn and fields"],["FIRM","Not wobbly"],["SWARM","Bee cloud"],["HUM","Tune without words"],["GUM","Chewed on the bus"],["SUM","Total"],["CRAB","Sideways walker"],
+ ["GRAB","Snatch"],["SLAB","Stone block"],["CLUB","Card suit with clover"],["CRUMB","Bread bit"],["THUMB","Hitchhiker's digit"],["LAMB","Spring's newborn"],["LIMB","Arm or branch"],
+ ["CLIMB","Go up a ladder"],["TOMB","Pharaoh's rest"],["HERB","Basil or thyme"],["VERB","Doing word"],["CURB","Street's edge"],["ORB","Glowing sphere"],["BULB","Light or tulip"],
+ ["SCRUB","Clean hard"],["SHRUB","Garden bush"],["CHERUB","Chubby angel"],["SUPERB","Top-notch"],["ABSORB","Soak up"],["RHUBARB","Tart pie stalk"],["COBWEB","Spider's leftover"],
+ ["KEBAB","Skewered dinner"],["MUSIC","Notes in order"],["LOGIC","Reasoning"],["PANIC","Sudden fright"],["TOPIC","Subject at hand"],["RELIC","Ancient leftover"],["EPIC","Grand saga"],
+ ["ARC","Curve of a rainbow"],["DISC","Flat circle"],["ZINC","Galvanizing metal"],["TONIC","Gin's partner"],["CIVIC","Of the town"],["TRAFFIC","Rush-hour crawl"],["PICNIC","Blanket lunch"],
+ ["MOSAIC","Tile picture"],["ARCTIC","Polar north"],["ATOMIC","Tiny-scale"],["COSMIC","Of the universe"],["MYSTIC","Seer"],["RUSTIC","Country-style"],["HAVOC","Chaos"],
+ ["MANIAC","Wild one"],["TRIP","Stumble, or a journey"],["DROP","Single raindrop"],["CLASP","Necklace fastener"],["GRASP","Firm hold"],["CRISP","Fresh apple's bite"],
+ ["STAMP","Letter's corner"],["RAMP","Sloped way"],["SWAMP","Boggy ground"],["CHAMP","Title holder"],["STUMP","Felled tree's leftover"],["JUMP","Leave the ground"],["SHRIMP","Cocktail seafood"],
+ ["SCOOP","Ice cream serving"],["TROOP","Scout group"],["LOOP","Closed curve"],["HOOP","Basketball ring"],["SYRUP","Pancake pour"],["GOSSIP","Whispered news"],["CATNIP","Feline's herb"],
+ ["GALLOP","Horse's fastest gait"],["HICCUP","Diaphragm's hitch"],["TEACUP","Saucer's partner"],["DEEP","Far down"],["STEEP","Hard to climb"],["SWEEP","Broom stroke"],["CREEP","Move on tiptoe"],
+ ["HEAP","Untidy pile"],["LEAP","Big jump"],["CHEAP","Bargain-priced"],["STEP","Stair"],["HELP","Assist"],["GULP","Big swallow"],["PULP","Juice's bits"],["CHIP","Cookie's dot"],
+ ["WHIP","Cream, beaten"],["GRIP","Handshake strength"],["SNIP","Small cut"],["STRIP","Narrow band"],["CLIP","Paper holder"],["MAP","Folded guide"],["CAP","Baseball hat"],
+ ["GAP","Missing piece"],["NAP","Afternoon doze"],["TRAP","Mouse catcher"],["WRAP","Tortilla lunch"],["STRAP","Bag's handle"],["SCRAP","Leftover bit"],["FLAP","Tent door"],
+ ["CLAP","Applaud"],["SNAP","Finger click"],["SNOW","Winter's blanket"],["BLOW","Puff of wind"],["GROW","Get taller"],["THROW","Pitch a ball"],["YELLOW","Sunflower shade"],
+ ["MELLOW","Laid-back"],["FELLOW","Chap"],["HOLLOW","Empty inside"],["FOLLOW","Come after"],["BORROW","Take on loan"],["NARROW","Tight squeeze"],["MARROW","Bone's core"],
+ ["FURROW","Plow's line"],["MINNOW","Tiny bait fish"],["ELBOW","Arm's hinge"],["SHOW","Stage production"],["STOW","Pack away"],["VOW","Wedding promise"],["BOW","Ribbon's knot"],
+ ["COW","Milk giver"],["PLOW","Field turner"],["CHEW","Work with the jaws"],["STEW","Slow-cooked pot"],["SCREW","Twist-in fastener"],["DEW","Morning grass beads"],["VIEW","What the window frames"],
+ ["CREW","Ship's team"],["DRAW","Sketch"],["CLAW","Cat's hook"],["THAW","Melt out of winter"],["PAW","Dog's foot"],["SAW","Toothed blade"],["LAW","Rule of the land"],["FLAW","Small defect"],
+ ["RAW","Uncooked"],["ROCK","Solid lump"],["FLOCK","Sheep group"],["STOCK","Soup base"],["BLOCK","City square"],["DOCK","Boat's parking"],["SOCK","Foot warmer"],["CLICK","Mouse sound"],
+ ["BRICK","Wall unit"],["STICK","Dog's fetch toy"],["TRICK","Magician's move"],["QUICK","Fast"],["THICK","Like pea soup"],["FLICK","Light tap"],["DUCK","Pond quacker"],["STUCK","Unable to move"],
+ ["PLUCK","Pick a string"],["CHALK","Blackboard stick"],["WALK","Go on foot"],["TALK","Chat"],["STALK","Celery piece"],["MILK","Cereal's partner"],["BULK","Big amount"],["ELK","Antlered giant"],
+ ["DARK","After lights out"],["PARK","Swings and benches"],["MARK","Pencil trace"],["CORK","Wine stopper"],["STORK","Baby-delivering bird"],["WORK","Nine to five"],["ASK","Pose a question"],
+ ["MASK","Face cover"],["TASK","To-do item"],["TUSK","Elephant's ivory"],["HUSK","Corn's wrapper"],["RISK","Gamble"],["BRISK","Quick and cool"],["LEAK","Dripping pipe"],["CREAK","Old floor's sound"],
+ ["STREAK","Winning run"],["SNEAK","Tiptoe past"],["SPEAK","Say aloud"],["CROAK","Frog's call"],["SOAK","Leave in water"],["HOOK","Coat hanger"],["BOOK","Bound pages"],["COOK","Kitchen boss"],
+ ["LOOK","Glance"],["NOOK","Cozy corner"],["BRINK","Edge of a cliff"],["BLINK","Eye's flutter"],["DRINK","Sip"],["THINK","Use your head"],["WINK","One-eyed hello"],["LINK","Chain piece"],
+ ["INK","Pen's fuel"],["PINK","Flamingo shade"],["SINK","Kitchen basin"],["MONK","Robed brother"],["CHUNK","Big piece"],["SKUNK","Striped stinker"],["YOLK","Egg's gold"],["FOLK","Ordinary people"],
+ ["KAYAK","Paddled boat, palindrome"],["BREAK","Coffee pause"],["WEEK","Seven days"],["CHEEK","Blush spot"],["SLEEK","Smooth and shiny"],["LAVA","Volcano's flow"],["TUBA","Deepest brass"],
+ ["DRAMA","Stage play"],["COBRA","Hooded snake"],["HYENA","Laughing scavenger"],["PUMA","Mountain cat"],["ALPACA","Woolly cousin of the llama"],["IGUANA","Spiny lizard"],["PIRANHA","Toothy river fish"],
+ ["BANANA","Monkey's snack"],["PAPAYA","Orange tropical fruit"],["GUAVA","Pink tropical fruit"],["PIZZA","Slice night"],["SALSA","Chip dip"],["VANILLA","Plain ice cream"],["QUINOA","Andean grain"],
+ ["SODA","Fizzy drink"],["MOCHA","Chocolate coffee"],["AROMA","Kitchen's smell"],["SAUNA","Hot wooden room"],["PLAZA","Town square"],["VILLA","Country mansion"],["CABANA","Poolside hut"],
+ ["ANTENNA","Signal catcher"],["CAMERA","Photo taker"],["SONATA","Piano piece"],["COMMA","Pause mark"],["ENIGMA","Baffling puzzle"],["SAGA","Long tale"],["YOGA","Stretching practice"],
+ ["DATA","Facts and figures"],["IDEA","Light bulb moment"],["AREA","Length times width"],["FLORA","Plant life"],["FAUNA","Animal life"],["MAGMA","Lava, underground"],["GALA","Fancy ball"],
+ ["CINEMA","Movie house"],["DIPLOMA","Graduation paper"],["FORMULA","Recipe for a result"],["STAMINA","Staying power"],["GONDOLA","Venice boat"],["MANTRA","Repeated phrase"],
+ ["SIESTA","Afternoon rest"],["FIESTA","Big party"],["TIARA","Small crown"],["SIERRA","Jagged range"],["ARMADA","Fleet of warships"],["KARMA","What goes around"],["HENNA","Skin dye"],
+ // theme words for the new payoffs
+ ["FLOUR","Baker's dust"],["OVEN","Where the loaf rises"],["YEAST","Dough's lifter"],["LOAF","Bread, whole"],["CRUST","Bread's edge"],["KNIFE","Bread slicer"],["WHEAT","Flour's source"],
+ ["DOUGH","Bread before the oven"],["JAM","Toast topper"],["GRAIN","Wheat kernel"],["TABLE","Where supper lands"],["CHORUS","Song's refrain"],["TUNE","Hummable melody"],["FLUTE","Silver woodwind"],
+ ["HARP","Angel's instrument"],["WHISTLE","Pursed-lip tune"],["LULLABY","Cradle song"],["ANTHEM","Stadium song"],["MUD","Rain plus dirt"],["FROG","Pond croaker"],["WOLF","Howler at the moon"],
+ ["HOWL","Wolf's cry"],["SILVER","Moon's metal"],["BULB","Lamp's glass"],
  ["PLANET","World orbiting a star"],["COMET","Tailed ice ball"],["ORBIT","Path around a star"],
  ["METEOR","Shooting star"],["SOLAR","Of the sun"],["LUNAR","Of the moon"],["CRATER","Impact scar"],
  ["RIVER","Flowing water"],["ISLAND","Sea-ringed land"],["VALLEY","Low between hills"],["DESERT","Arid land"],
@@ -346,7 +415,15 @@ const RAW = [
 ];
 /* Duplicate words in RAW are merged: every distinct clue is kept and one is drawn per puzzle, so a
    repeat becomes clue variety instead of dead weight. Clues in BAD_CLUES are dropped outright. */
-const BAD_CLUES=new Set(["ANCHOR|Ship's hold","JELLY|Stinging drifter","EAGLES|Philly NFL"]);
+const BAD_CLUES=new Set(["ANCHOR|Ship's hold","JELLY|Stinging drifter","EAGLES|Philly NFL",
+  // one-word definitions replaced by fuller clues (see the top of RAW)
+  "CABLE|Wire","SCREEN|Display","SIGNAL|Transmission","FLOWER|Bloom","PHONE|Caller","RIDE|Trip","ABODE|Home","OXIDE|Rust","GRIME|Dirt","SOUND|Noise",
+  "SLOPES|Hillsides","SPACES|Gaps","SHORES|Coastlines","SPICES|Flavorings","TABLES|Furniture","TRADES|Swaps","TRAILS|Paths","TREATS|Goodies","ECHOES|Repeats","EDGES|Borders",
+  "TONE|Pitch","PLACE|Location","LARGE|Big","STORE|Shop","CURVE|Bend","CHART|Graph","VESSEL|Ship","FABRIC|Cloth","ZERO|Nothing","TOTAL|Sum","HOUSE|Dwelling","GHOST|Spirit",
+  "SWORD|Blade","MAGIC|Wizardry","TALE|Story","THEME|Motif","ARENA|Stadium","RULE|Regulation","RAGE|Fury","SALE|Bargain","CLOSE|Shut","DODGE|Evade","MERGE|Combine","STOVE|Cooktop",
+  "WASTE|Squander","FOCUS|Sharpness","SPLIT|Divide","VIGOR|Energy","ROUND|Circular","SHORE|Coastline","SPARE|Extra","WAVER|Hesitate","SOLACE|Comfort","MIRTH|Merriment",
+  "COURAGE|Bravery","FAITH|Belief","DOUBT|Uncertainty","WONDER|Awe","TENDER|Gentle","KINGDOM|Realm","NORSE|Viking-ish","RARE|Uncommon","TRIBE|Clan","SINGER|Vocalist",
+  "SUGAR|Sweetener","BLACK|Darkest","NOMAD|Wanderer","DOCTOR|Healer","LIE|Untruth","ANSWER|Reply","PROOF|Evidence","HONEST|Truthful"]);
 const _byWord=new Map();
 for(const [w,c] of RAW){const W=w.toUpperCase();if(!/^[A-Z]+$/.test(W)||W.length<3)continue;if(BAD_CLUES.has(W+"|"+c))continue;
   let e=_byWord.get(W);if(!e){e={word:W,clues:[]};_byWord.set(W,e);}if(e.clues.indexOf(c)<0)e.clues.push(c);}
@@ -463,14 +540,33 @@ async function buildPuzzle(name,prefer,avoid,abort){
     }
     return {ei,word:w.word,clue:w.clue,from:a,to:b,len:L,cells,num:ei+1,layer:'edge'};
   });
-  return {solid,vertices,edges,_cur:{},coreCur:"",name};
+  return {solid,vertices,edges,_cur:{},ringCur:[],name};
 }
-function getCur(p,c){if(c.kind==='v')return p.vertices[c.v].cur;if(c.kind==='core')return p.coreCur||"";return p._cur[c.key]||"";}
-function setCur(p,c,ch){if(c.kind==='v')p.vertices[c.v].cur=ch;else if(c.kind==='core')p.coreCur=ch;else p._cur[c.key]=ch;}
+function getCur(p,c){if(c.kind==='v')return p.vertices[c.v].cur;if(c.kind==='ring')return p.ringCur[c.k]||"";return p._cur[c.key]||"";}
+function setCur(p,c,ch){if(c.kind==='v')p.vertices[c.v].cur=ch;else if(c.kind==='ring')p.ringCur[c.k]=ch;else p._cur[c.key]=ch;}
 function wordDone(p,w){return w.cells.every(c=>getCur(p,c)===c.letter);}
 function solved(p){for(const w of allWords(p))for(const c of w.cells)if(getCur(p,c)!==c.letter)return false;return true;}
 
-function allWords(p){return [...p.edges,...(p.faceWords||[]),...(p.spokeWords||[])];}
+function allWords(p){return [...p.edges,...(p.faceWords||[]),...(p.spokeWords||[]),...(p.ringWord?[p.ringWord]:[])];}
+/* ---- pigments: every face carries cyan, magenta or yellow; the center mixes what the spokes bring ---- */
+const PIG_RGB=[[0,182,242],[236,28,160],[255,214,30]],PIG_NAME=["cyan","magenta","yellow"];
+/* subtractive mix of a set of pigments (flags [c,m,y]); dark mixes are lifted a little so they read on the dark scene */
+function mixPig(flags){const k=0.85;let r=1,g=1,b=1;if(flags[0])r*=1-k;if(flags[1])g*=1-k;if(flags[2])b*=1-k;
+  let c=[r,g,b];const lum=0.3*r+0.59*g+0.11*b;if(lum<0.25){const t=(0.25-lum)/0.25*0.6;c=c.map(x=>x+(0.85-x)*t);}
+  return c.map(x=>Math.round(x*255));}
+/* ink = what the three pigments make together; the paper disc at the center takes this color */
+function inkColor(flags){if(!flags[0]&&!flags[1]&&!flags[2])return [235,238,255];const k=0.87;let r=1,g=1,b=1;if(flags[0])r*=1-k;if(flags[1])g*=1-k;if(flags[2])b*=1-k;return [r,g,b].map(x=>Math.round(x*255));}
+/* the center ring: N letter slots on a circle in the solid's xy plane, clockwise from the top */
+const RING_R=0.36;
+function ringPoint(k,n){const a=Math.PI/2-2*Math.PI*k/n;return [RING_R*Math.cos(a),RING_R*Math.sin(a),0];}
+/* deterministic 3-colouring of the faces: neighbours differ where the shape allows, counts stay balanced */
+function assignPigments(solid){const F=solid.F;const ek=(a,b)=>Math.min(a,b)+"_"+Math.max(a,b);const ef={};
+  F.forEach((f,fi)=>{[[f[0],f[1]],[f[1],f[2]],[f[0],f[2]]].forEach(pr=>{const k=ek(pr[0],pr[1]);(ef[k]=ef[k]||[]).push(fi);});});
+  const adj=F.map(()=>[]);for(const k in ef){const [a,b]=ef[k];if(b!==undefined){adj[a].push(b);adj[b].push(a);}}
+  const pig=Array(F.length).fill(-1),cnt=[0,0,0];
+  for(let fi=0;fi<F.length;fi++){const taken=new Set(adj[fi].map(j=>pig[j]).filter(x=>x>=0));let best=0,bc=1e9;
+    for(let p=0;p<3;p++){const c=cnt[p]+(taken.has(p)?100:0);if(c<bc){bc=c;best=p;}}pig[fi]=best;cnt[best]++;}
+  return pig;}
 function _shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(RNG()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 /* Each payoff carries a `near` list: the theme words the puzzle is built from (edges first, then
@@ -503,10 +599,21 @@ const PAYOFFS=[
  {word:"NEST",kind:"a small story",near:["RAVEN","EAGLE","TWINE","BRANCH","CANARY","CRANE","CROW","DOVE","FEATHER","FINCH","HAWK","HERON","OSPREY","PARROT","PELICAN","PERCH","PIGEON","QUAIL","RIBBON","ROBIN","SPARROW","SWALLOW","THREAD","WREN","EGG","BIRD","WING","STRING","STRAW","BEAK","OWL","HATCH","CHICK","MOSS","TWIG","LEAF","SHELTER","HOME"],
   text:"They build it from whatever the wind left lying around -\nstring, a lost ribbon, the soft inside of something that failed.\nNothing in it was made for the job.\nAnd yet it holds, just long enough,\nthe only thing it was ever for."},
  {word:"TRUTH",kind:"a quip",near:["TRUST","RIDDLE","GHOST","MIRROR","DOUBT","FAITH","JIGSAW","LEGEND","PUZZLE","SWORE","SECRET","ANSWER","QUESTION","PROOF","CLUE","WITNESS","OATH","FACT","HONEST","LIE","RUMOR","WHISPER","SHADOW","LIGHT","LAMP","GLASS","JUDGE","TRIAL","LENS","COMPASS"],
-  text:"It rarely shouts.\nIt waits - the way a step you missed in the dark waits:\npatient, exact,\nand entirely unimpressed by what you'd prefer."}
+  text:"It rarely shouts.\nIt waits - the way a step you missed in the dark waits:\npatient, exact,\nand entirely unimpressed by what you'd prefer."},
+ // ---- drafts added in the core redesign; edit freely ----
+ {word:"LIGHT",kind:"a poem",near:["LAMP","LANTERN","CANDLE","DAWN","SUNRISE","BEACON","GLOW","SPARK","FLAME","WINDOW","MIRROR","PRISM","SHADOW","TORCH","STAR","MOON","AURORA","TWINKLE","SHIMMER","FLICKER","HALO","LENS","GLASS","TWILIGHT","NOON","FIREFLY","LIGHTHOUSE","ECLIPSE","SOLAR","RAINBOW","BULB","RAY"],
+  text:"It has no weight, and still it lifts the room.\nIt asks nothing of the window but a way in.\nWhat it touches it does not keep -\nit only shows you what was there already,\nand then goes on to the next dark thing."},
+ {word:"BREAD",kind:"a small story",near:["FLOUR","OVEN","YEAST","LOAF","CRUST","BUTTER","KITCHEN","TOAST","SUPPER","TABLE","KNIFE","HONEY","SALT","WHEAT","CRUMB","BAKER","PASTRY","SCONE","BAGEL","KETTLE","HEARTH","STOVE","DOUGH","BASKET","PANTRY","FEAST","FAMILY","HOME","JAM","GRAIN"],
+  text:"Flour, water, salt, and the one thing you cannot buy: time.\nYou fold it and leave it. You fold it and leave it.\nBy evening the kitchen smells like every kitchen you were ever forgiven in,\nand you break it with your hands, because that is the rule,\nand pass the larger half across the table."},
+ {word:"SONG",kind:"a poem",near:["MELODY","RHYTHM","GUITAR","PIANO","VIOLIN","SINGER","BALLAD","CHIME","CHORUS","VERSE","TUNE","DRUM","CELLO","BANJO","FLUTE","HARP","OPERA","ECHO","WHISTLE","LULLABY","HUM","THROAT","VOICE","LARK","ROBIN","WREN","FINCH","CANARY","BELL","TEMPO","SOLO","TRIO","ANTHEM"],
+  text:"You did not write it. It arrived,\nthe way weather arrives, already knowing your name.\nYou only hummed along until the words came back,\nand now it lives in the small bones of your ear\nand plays whether you ask it to or not."},
+ {word:"RAIN",kind:"a small story",near:["CLOUD","STORM","PUDDLE","UMBRELLA","GUTTER","DRIZZLE","DOWNPOUR","MONSOON","THUNDER","WINDOW","ROOF","MIST","FOG","RAINBOW","RIVER","FLOOD","MUD","SEED","GARDEN","MEADOW","FROG","WORM","LEAF","SPRING","AUTUMN","BREEZE","DEW","SLEET","HAIL","SHELTER","PORCH","KETTLE","AWNING"],
+  text:"It started as a rumor on the roof.\nThen the gutters cleared their throats,\nthe street shone like it had been given a second chance,\nand the whole neighborhood stood in doorways\nnot saying anything, and not needing to."},
+ {word:"MOON",kind:"a poem",near:["LUNAR","CRESCENT","TIDE","NIGHT","STAR","ORBIT","ECLIPSE","MIDNIGHT","OWL","SHADOW","SILVER","CRATER","LANTERN","TWILIGHT","DUSK","WOLF","HOWL","SKY","GLOW","HALO","COMET","PLANET","SATELLITE","ROCKET","DREAM","SLEEP","PILLOW","WINDOW","MIST","FOG","HARVEST"],
+  text:"It borrows all its light and never says so.\nIt pulls whole oceans and asks for nothing back.\nHalf of it is always hidden -\nand still we call it full\nwhenever we can see enough of it to want."}
 ];
 /* Stamp of the word bank + themes: a saved game only resumes if the generator inputs are unchanged. */
-const BANK_SIG="v2|"+BANK.length+"|"+PAYOFFS.reduce((s,p)=>s+p.near.length,0);
+const BANK_SIG="v3|"+BANK.length+"|"+PAYOFFS.reduce((s,p)=>s+p.near.length,0);
 function choosePayoff(){const mf=MOODFILTER?PAYOFFS.filter(p=>MOODFILTER.indexOf(p.word)>=0):PAYOFFS;const pool=mf.length?mf:PAYOFFS;return pool[(RNG()*pool.length)|0];}
 function themeSets(payoff){return {prefer:new Set((payoff.near||[]).filter(w=>w!==payoff.word)),avoid:new Set([payoff.word])};}
 
@@ -554,34 +661,44 @@ function extendPuzzle(P,payoff){
       cells.push({kind:'v',v:f[0],p3:V[f[0]],letter:La});cells.push({kind:'v',v:f[2],p3:V[f[2]],letter:Lc});}
     return {layer:'face',face:fi,word,clue,len:word.length,cells,fallback:!connected,connected,num:'F'+(fi+1)};
   });
-  // choose the center letter to maximise how many corner->center words exist
-  const cornerSet=new Set(P.vertices.map(v=>v.sol));
-  const endCnt={};for(const e of BANK){if(cornerSet.has(e.word[0]))endCnt[e.word[e.word.length-1]]=(endCnt[e.word[e.word.length-1]]||0)+1;}
-  const _need=Math.max(3,Math.ceil(P.solid.F.length*0.6));
-  let _cands=Object.keys(endCnt).filter(k=>endCnt[k]>=_need);if(!_cands.length)_cands=Object.keys(endCnt);
-  let _tot=_cands.reduce((s,k)=>s+endCnt[k],0),_r=RNG()*_tot,X=_cands[0]||'E';
-  for(const k of _cands){_r-=endCnt[k];if(_r<=0){X=k;break;}}
-  P.coreLetter=X;
-  const findSE=(a,b)=>{for(const w of bset()){if(used.has(w.word)||w.word.length>SPOKE_MAX)continue;if(w.word[0]===a&&w.word[w.word.length-1]===b){used.add(w.word);return w;}}return null;};
+  /* ---- the center ring + spokes ----
+     The payoff word sits in the middle as a ring of N letter slots. A few faces (covering all three
+     pigments) send a spoke word from one of their corners to a slot: the spoke's last letter IS that
+     slot's letter. Spokes never cover every slot; the leftover letters are the player's to decode
+     once every spoke has landed and the pigments have made ink. */
+  const pig=assignPigments(P.solid);P._pigment=pig;
+  const word0=payoff.word,N=word0.length;
+  const ringCells=[];for(let k=0;k<N;k++)ringCells.push({kind:'ring',key:'R'+k,k,p3:ringPoint(k,N),letter:word0[k]});
+  P.ringWord={layer:'core',num:'●',word:word0,clue:"What every word here was circling",len:N,cells:ringCells,connected:true};
+  const target=Math.max(3,Math.min(N-1,F.length,4));   // spokes per puzzle: 3 for a 4-letter center, 4 for 5+
+  const scarcity=k=>(BY_LAST[word0[k]]||[]).length;
+  const slotOrder=[...Array(N).keys()].sort((a,b)=>scarcity(a)-scarcity(b));   // hardest letters first
+  const findSpoke=(a,b)=>{for(const w of bset()){if(used.has(w.word)||w.word.length>SPOKE_MAX)continue;if(w.word[0]===a&&w.word[w.word.length-1]===b)return w;}return null;};
+  const usedFaces=new Set(),usedSlots=new Set(),picks=[];
+  const tryFace=(fi)=>{for(const k of slotOrder){if(usedSlots.has(k))continue;
+    for(const cvx of _shuf(F[fi])){const w=findSpoke(P.vertices[cvx].sol,word0[k]);
+      if(w){used.add(w.word);usedFaces.add(fi);usedSlots.add(k);picks.push({k,fi,cornerV:cvx,w});return true;}}}return false;};
+  // pass 1: one spoke per pigment, so the center can always make ink (pigments with fewest faces first)
+  const byPig=[[],[],[]];F.forEach((f,fi)=>byPig[pig[fi]].push(fi));
+  for(const p of [0,1,2].sort((a,b)=>byPig[a].length-byPig[b].length)){for(const fi of _shuf(byPig[p])){if(tryFace(fi))break;}}
+  // pass 2: top up to the target from any remaining face
+  for(const fi of _shuf([...Array(F.length).keys()])){if(picks.length>=target)break;if(!usedFaces.has(fi))tryFace(fi);}
   const qbez=(A,Cc,O,t)=>{const u=1-t;return [u*u*A[0]+2*u*t*Cc[0]+t*t*O[0],u*u*A[1]+2*u*t*Cc[1]+t*t*O[1],u*u*A[2]+2*u*t*Cc[2]+t*t*O[2]];};
-  P.spokeWords=F.map((f,fi)=>{
-    const G=cen(f),O=[0,0,0];const Cc=[G[0]*1.25,G[1]*1.25,G[2]*1.25];
-    let chosen=null,cornerV=null;
-    for(const cvx of _shuf([f[0],f[1],f[2]])){const w=findSE(P.vertices[cvx].sol,X);if(w){chosen=w;cornerV=cvx;break;}}
-    const cells=[];
-    if(chosen){const word=chosen.word,L=word.length,A=V[cornerV];
-      for(let k=0;k<L;k++){const t=k/(L-1);const p3=qbez(A,Cc,O,t);
-        if(k===0)cells.push({kind:'v',v:cornerV,p3:A,letter:word[0]});
-        else if(k===L-1)cells.push({kind:'core',p3:O,letter:word[L-1]});
-        else cells.push({kind:'sc',key:'S'+fi+'_'+k,p3,letter:word[k]});}
-      return {layer:'spoke',face:fi,word,clue:pickClue(chosen),len:L,cells,cornerV,connected:true,num:'C'+(fi+1)};
-    }
-    const w=findCore(X)||findAny();const word=w.word,L=word.length;
-    for(let k=0;k<L;k++){const t=k/(L-1);const p3=qbez(G,Cc,O,t);
-      if(k===L-1)cells.push({kind:'core',p3:O,letter:word[k]});
-      else cells.push({kind:'sc',key:'S'+fi+'_'+k,p3,letter:word[k]});}
-    return {layer:'spoke',face:fi,word,clue:pickClue(w),len:L,cells,connected:false,num:'C'+(fi+1)};
+  picks.sort((a,b)=>a.k-b.k);
+  P.spokeWords=picks.map((pk,idx)=>{
+    const {k,fi,cornerV,w}=pk;const G=cen(F[fi]);const Cc=[G[0]*1.25,G[1]*1.25,G[2]*1.25];const A=V[cornerV],O=ringCells[k].p3;
+    const word=w.word,L=word.length,cells=[];
+    for(let j=0;j<L;j++){const t=j/(L-1);
+      if(j===0)cells.push({kind:'v',v:cornerV,p3:A,letter:word[0]});
+      else if(j===L-1)cells.push(ringCells[k]);
+      else cells.push({kind:'sc',key:'S'+fi+'_'+j,p3:qbez(A,Cc,O,t),letter:word[j]});}
+    return {layer:'spoke',face:fi,slot:k,word,clue:pickClue(w),len:L,cells,cornerV,connected:true,num:'C'+(idx+1)};
   });
+  // last resort (no corner->slot word at all): one spoke rising from a face centroid to slot 0
+  if(!P.spokeWords.length){const fi=0,G=cen(F[fi]),Cc=[G[0]*1.25,G[1]*1.25,G[2]*1.25],O=ringCells[0].p3;
+    const w=findCore(word0[0])||findAny();const word=w.word,L=word.length,cells=[];
+    for(let j=0;j<L;j++){const t=j/(L-1);if(j===L-1)cells.push(ringCells[0]);else cells.push({kind:'sc',key:'S'+fi+'_'+j,p3:qbez(G,Cc,O,t),letter:word[j]});}
+    P.spokeWords=[{layer:'spoke',face:fi,slot:0,word,clue:pickClue(w),len:L,cells,connected:false,num:'C1'}];}
   return P;
 }
 /* ============================================================
@@ -648,7 +765,7 @@ async function newPuzzle(resume){
   RNG=Math.random;
   if(resume){
     (resume.v||[]).forEach((ch,i)=>{if(P.vertices[i])P.vertices[i].cur=ch||"";});
-    P._cur=Object.assign({},resume.i||{});P.coreCur=resume.core||"";
+    P._cur=Object.assign({},resume.i||{});P.ringCur=(resume.ring||[]).slice();
     timer=resume.timer||0;assists=resume.assists||0;revealedAll=!!resume.revealedAll;$("timer").textContent=fmt(timer);
     if(timer>0)markStart();
   }
@@ -663,7 +780,7 @@ async function newPuzzle(resume){
 function saveGame(){if(!P||won){store.game=null;persist();return;}
   // shape = the shape that was REQUESTED (not P.name): the seed must replay the same generation path
   store.game={ver:1,sig:BANK_SIG,seed,shape:sizeName,mode,dailyKey,mood:MOODIDX,timer,assists,revealedAll,
-    v:P.vertices.map(v=>v.cur),i:P._cur,core:P.coreCur,sel:sel.word?sel.word.layer+sel.word.num:null};
+    v:P.vertices.map(v=>v.cur),i:P._cur,ring:P.ringCur,sel:sel.word?sel.word.layer+sel.word.num:null};
   persist();}
 function resumeGame(){const g=store.game;if(!g||g.ver!==1||g.sig!==BANK_SIG||!SIZES[g.shape])return false;
   mode=g.mode==="daily"?"daily":"practice";sizeName=g.shape;dailyKey=g.dailyKey||null;dailySeed=mode==="daily"?g.seed:null;
@@ -677,17 +794,15 @@ function precompute(P){
   P._edgeByPair={};P.edges.forEach(e=>{P._edgeByPair[key(e.from,e.to)]=e;});
   P._faceEdges=P.solid.F.map(f=>[P._edgeByPair[key(f[0],f[1])],P._edgeByPair[key(f[1],f[2])],P._edgeByPair[key(f[0],f[2])]]);
   P._faceCentroid=P.solid.F.map(f=>{const c=[0,0,0];f.forEach(vi=>{const p=vpos(vi);for(let k=0;k<3;k++)c[k]+=p[k]/3;});return c;});
-  P._faceColor=P.solid.F.map((f,fi)=>{
-    const c=P._faceCentroid[fi];const n=Math.hypot(c[0],c[1],c[2])||1;const nx=c[0]/n,ny=c[1]/n,nz=c[2]/n;
-    const az=Math.atan2(ny,nx);const sector=((Math.floor((az+Math.PI)/(2*Math.PI)*3))%3+3)%3;
-    const hue=[186,300,56][sector]+nz*24;return hslRgb(hue/360,0.85,0.56);
-  });
-  const ef={};P.solid.F.forEach((f,fi)=>{P._faceEdges[fi].forEach(e=>{if(e){(ef[e.ei]=ef[e.ei]||[]).push(P._faceColor[fi]);}});});
-  P.edges.forEach(e=>{const fs=ef[e.ei]||[[150,120,255]];e._col=[0,1,2].map(k=>Math.round(fs.reduce((a,c)=>a+c[k],0)/fs.length));});
+  // faces are painted in their pigment; an edge mixes the pigments of the faces it joins (cyan+magenta reads blue, etc.)
+  P._faceColor=P.solid.F.map((f,fi)=>PIG_RGB[P._pigment[fi]]);
+  const ef={};P.solid.F.forEach((f,fi)=>{P._faceEdges[fi].forEach(e=>{if(e){(ef[e.ei]=ef[e.ei]||[false,false,false])[P._pigment[fi]]=true;}});});
+  P.edges.forEach(e=>{e._pig=ef[e.ei]||[false,false,false];e._col=mixPig(e._pig);});
   P._cornerEdges={};P.vertices.forEach(v=>P._cornerEdges[v.i]=[]);P.edges.forEach(e=>{P._cornerEdges[e.from].push(e);P._cornerEdges[e.to].push(e);});
 }
 function hslRgb(h,s,l){h=(h%1+1)%1;function f(n){const k=(n+h*12)%12;const a=s*Math.min(l,1-l);return l-a*Math.max(-1,Math.min(k-3,9-k,1));}return [Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];}
-function cornerBleed(vi){const es=P._cornerEdges[vi];let n=0;const c=[0,0,0];for(const e of es){if(wordDone(P,e)){n++;for(let k=0;k<3;k++)c[k]+=e._col[k];}}if(!n)return null;return {col:[Math.round(c[0]/n),Math.round(c[1]/n),Math.round(c[2]/n)],w:n/es.length};}
+/* a corner takes on the mix of every pigment its solved edges carry */
+function cornerBleed(vi){const es=P._cornerEdges[vi];let n=0;const f=[false,false,false];for(const e of es){if(wordDone(P,e)){n++;for(let k=0;k<3;k++)if(e._pig[k])f[k]=true;}}if(!n)return null;return {col:mixPig(f),w:n/es.length};}
 
 /* ---------- progression / gating ---------- */
 function faceEdgesSolved(fi){return P._faceEdges[fi].every(e=>e&&wordDone(P,e));}
@@ -695,19 +810,24 @@ function faceWordSolved(fi){return wordDone(P,P.faceWords[fi]);}
 function faceUnlocked(fw){return faceEdgesSolved(fw.face);}
 function spokeUnlocked(sw){return faceWordSolved(sw.face);}
 function faceDeveloping(fi){return P._faceEdges[fi].some(e=>e&&wordDone(P,e));}
+function ringVisible(){return P.spokeWords.some(spokeUnlocked);}
+function coreUnlocked(){return P.spokeWords.length>0&&P.spokeWords.every(w=>wordDone(P,w));}
+/* which pigments have reached the center (carried by finished spokes) */
+function pigmentsArrived(){const s=[false,false,false];for(const w of P.spokeWords)if(wordDone(P,w))s[P._pigment[w.face]]=true;return s;}
 function stageCounts(){
   const eS=P.edges.filter(e=>wordDone(P,e)).length;
   const fS=P.faceWords.filter((w,fi)=>faceWordSolved(fi)).length;
-  const cS=P.spokeWords.filter(w=>wordDone(P,w)).length;
-  return {eS,eT:P.edges.length,fS,fT:P.faceWords.length,cS,cT:P.spokeWords.length};
+  const cS=P.spokeWords.filter(w=>wordDone(P,w)).length+(wordDone(P,P.ringWord)?1:0);
+  return {eS,eT:P.edges.length,fS,fT:P.faceWords.length,cS,cT:P.spokeWords.length+1};
 }
 function visibleWords(){
   const out=[...P.edges];
   P.faceWords.forEach(w=>out.push(w));
   P.spokeWords.forEach(w=>{if(spokeUnlocked(w))out.push(w);});
+  if(coreUnlocked())out.push(P.ringWord);
   return out;
 }
-function selectable(w){return w.layer==='edge'||(w.layer==='face'&&faceUnlocked(w))||(w.layer==='spoke'&&spokeUnlocked(w));}
+function selectable(w){return w.layer==='edge'||(w.layer==='face'&&faceUnlocked(w))||(w.layer==='spoke'&&spokeUnlocked(w))||(w.layer==='core'&&coreUnlocked());}
 function selectableList(){return visibleWords().filter(selectable);}
 
 /* ---------- geometry ---------- */
@@ -715,7 +835,7 @@ function rot(p){const cy=Math.cos(view.yaw),sy=Math.sin(view.yaw),cx=Math.cos(vi
   let x=p[0]*cy+p[2]*sy,z=-p[0]*sy+p[2]*cy,y=p[1];return [x,y*cx-z*sx,y*sx+z*cx];}
 function project(p){const r=rot(p);const D=4.6;const s=SCALE*view.zoom/(D-r[2]);return {x:CX+r[0]*s,y:CY-r[1]*s,z:r[2],s};}
 function vpos(i){return P.vertices[i].p;}
-function cellPoint(c){return c.kind==='v'?P.vertices[c.v].p:(c.kind==='core'?[0,0,0]:c.p3);}
+function cellPoint(c){return c.kind==='v'?P.vertices[c.v].p:c.p3;}
 function projCell(c){return project(cellPoint(c));}
 function norm(z){return Math.max(0,Math.min(1,(z+1.6)/3.2));}
 function mid(e){const A=vpos(e.from),B=vpos(e.to);return [(A[0]+B[0])/2,(A[1]+B[1])/2,(A[2]+B[2])/2];}
@@ -743,7 +863,7 @@ function render(){
   // faces split for true interior
   const faceItems=P.solid.F.map((f,fi)=>({fi,z:rot(P._faceCentroid[fi])[2]})).sort((a,b)=>a.z-b.z);
   for(const {fi,z} of faceItems.filter(x=>x.z<0))drawFace(fi,norm(z));
-  drawInterior(prog);
+  drawCore();
   drawSpokes();
   drawCorePulses();
   for(const {fi,z} of faceItems.filter(x=>x.z>=0))drawFace(fi,norm(z));
@@ -760,16 +880,26 @@ function render(){
 function drawFace(fi,depth){
   const f=P.solid.F[fi];const A=project(vpos(f[0])),B=project(vpos(f[1])),C=project(vpos(f[2]));
   const fp=(P._faceEdges[fi].filter(e=>e&&wordDone(P,e)).length)/3;const col=P._faceColor[fi];
+  const released=wordDone(P,P.faceWords[fi]);
+  // faces step back while the player works inside the solid (a spoke or the center ring is selected)
+  const dim=(sel.word&&(sel.word.layer==='spoke'||sel.word.layer==='core')&&!won)?0.35:1;
   ctx.save();ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.closePath();ctx.clip();
-  ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.07+0.42*fp+0.05*depth*fp})`;ctx.fill();
+  // every face shows its pigment from the first move (faint), and fills as its edges and word are solved
+  ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${(0.06+0.30*fp+(released?0.16:0)+0.05*depth*fp)*dim})`;ctx.fill();
   const size=Math.max(Math.hypot(A.x-B.x,A.y-B.y),Math.hypot(B.x-C.x,B.y-C.y),Math.hypot(A.x-C.x,A.y-C.y))||1;
   for(const [pp,vi] of [[A,f[0]],[B,f[1]],[C,f[2]]]){const cb=cornerBleed(vi);if(!cb)continue;
-    const g=ctx.createRadialGradient(pp.x,pp.y,0,pp.x,pp.y,size);const a=0.34*cb.w*(0.45+0.55*fp);
+    const g=ctx.createRadialGradient(pp.x,pp.y,0,pp.x,pp.y,size);const a=0.34*cb.w*(0.45+0.55*fp)*dim;
     g.addColorStop(0,`rgba(${cb.col[0]},${cb.col[1]},${cb.col[2]},${a})`);g.addColorStop(1,`rgba(${cb.col[0]},${cb.col[1]},${cb.col[2]},0)`);
     ctx.fillStyle=g;ctx.fill();}
   ctx.restore();
   if(fp>0){ctx.save();ctx.globalCompositeOperation="lighter";ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.closePath();
-    ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.05*fp})`;ctx.fill();ctx.restore();}
+    ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.05*fp*dim})`;ctx.fill();ctx.restore();}
+  // pigment mark at the face centre: a dot until the face word is solved, then a lit ring
+  const G=project(P._faceCentroid[fi]);const zf=Math.max(0.75,Math.min(1.7,view.zoom));const r=(released?5.5:3.6)*zf;
+  ctx.save();ctx.globalAlpha=(0.22+0.5*depth)*dim;ctx.beginPath();ctx.arc(G.x,G.y,r,0,7);
+  if(released){ctx.strokeStyle=`rgb(${col[0]},${col[1]},${col[2]})`;ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha*=0.5;ctx.fillStyle=`rgb(${col[0]},${col[1]},${col[2]})`;ctx.beginPath();ctx.arc(G.x,G.y,r*0.45,0,7);ctx.fill();}
+  else{ctx.fillStyle=`rgb(${col[0]},${col[1]},${col[2]})`;ctx.fill();}
+  ctx.restore();
 }
 function drawEdge(e){const A=project(vpos(e.from)),B=project(vpos(e.to));const isSel=sel.word===e;const depth=norm((A.z+B.z)/2);const done=wordDone(P,e);
   ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);
@@ -789,23 +919,23 @@ function drawFaceChords(){
   }
 }
 function drawSpokes(){
-  ctx.save();ctx.globalCompositeOperation="lighter";
-  for(const sw of P.spokeWords){if(!spokeUnlocked(sw))continue;const done=wordDone(P,sw),isSel=sel.word===sw;
-    polyline(sw.cells);
-    if(isSel){ctx.strokeStyle="rgba(150,120,255,.95)";ctx.lineWidth=2.6;}
-    else if(done){ctx.strokeStyle="rgba(255,220,150,.7)";ctx.lineWidth=2.0;}
-    else{ctx.strokeStyle="rgba(190,180,255,.45)";ctx.lineWidth=1.5;}
-    ctx.stroke();}
-  ctx.restore();
+  for(const sw of P.spokeWords){if(!spokeUnlocked(sw))continue;const done=wordDone(P,sw),isSel=sel.word===sw;const c=spokeColor(sw);
+    if(isSel){ctx.save();polyline(sw.cells);ctx.strokeStyle="rgba(8,10,20,.85)";ctx.lineWidth=16;ctx.lineJoin="round";ctx.lineCap="round";ctx.stroke();ctx.restore();}  // backing band: the word reads over the interior
+    ctx.save();ctx.globalCompositeOperation="lighter";polyline(sw.cells);
+    if(isSel){ctx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},.95)`;ctx.lineWidth=2.8;}
+    else if(done){ctx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},.75)`;ctx.lineWidth=2.2;}
+    else{ctx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},.4)`;ctx.lineWidth=1.5;}
+    ctx.stroke();ctx.restore();}
 }
 function drawNodes(){
   const seen=new Set();const nodes=[];
   const add=(words,gate)=>{for(const w of words){if(gate&&!gate(w))continue;for(const c of w.cells){
-    const id=c.kind==='v'?'v'+c.v:(c.kind==='core'?'core':c.key);if(seen.has(id))continue;seen.add(id);
+    const id=c.kind==='v'?'v'+c.v:c.key;if(seen.has(id))continue;seen.add(id);
     nodes.push({id,c,pos:projCell(c)});}}};
   add(P.edges);
   add(P.faceWords,faceUnlocked);
   add(P.spokeWords,spokeUnlocked);
+  add([P.ringWord],ringVisible);   // the whole ring shows as soon as the first spoke opens
   nodes.sort((a,b)=>a.pos.z-b.pos.z);
   projCells=[];
   for(const n of nodes)drawNode(n);
@@ -814,11 +944,11 @@ function drawSelectedWord(w){
   if(w.layer==='edge'){drawEdge(w);}
   else{polyline(w.cells);ctx.strokeStyle=w.layer==='spoke'?"rgba(150,120,255,.95)":"rgba(124,92,255,.95)";ctx.lineWidth=3;ctx.stroke();}
   const seen=new Set();
-  for(const c of w.cells){const id=c.kind==='v'?'v'+c.v:(c.kind==='core'?'core':c.key);if(seen.has(id))continue;seen.add(id);drawNode({id,c,pos:projCell(c)});}
+  for(const c of w.cells){const id=c.kind==='v'?'v'+c.v:c.key;if(seen.has(id))continue;seen.add(id);drawNode({id,c,pos:projCell(c)});}
 }
 let checkFlash=false;
 function drawNode(n){
-  const c=n.c,pos=n.pos,depth=norm(pos.z);const isShared=(c.kind==='v'||c.kind==='core');
+  const c=n.c,pos=n.pos,depth=norm(pos.z);const isShared=(c.kind==='v'||c.kind==='ring');
   const cur=getCur(P,c),correct=cur&&cur===c.letter;
   const zf=Math.max(0.75,Math.min(1.7,view.zoom));
   // corners largest, edge letters next; face and spoke letters sit inside the cage, so keep them smaller to limit overlap
@@ -829,58 +959,56 @@ function drawNode(n){
   // solved cells fade back (preserve the shape, demote the letter) unless they're in the current word
   const demoted=correct&&!active&&!onSel&&!won;
   const letterDim=demoted?(isShared?0.85:0.5):1;     // fade the letter, not the chip
-  if(correct&&(active||onSel||c.kind==='core')&&!demoted){ctx.save();ctx.globalCompositeOperation="lighter";const g=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,baseR*2.1);
-    const gc=c.kind==='core'?"255,210,140":(c.kind==='v'?"160,120,255":"110,220,200");
+  if(correct&&(active||onSel||c.kind==='ring')&&!demoted){ctx.save();ctx.globalCompositeOperation="lighter";const g=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,baseR*2.1);
+    const gc=c.kind==='ring'?"255,210,140":(c.kind==='v'?"160,120,255":"110,220,200");
     g.addColorStop(0,`rgba(${gc},${0.28+0.25*depth})`);g.addColorStop(1,`rgba(${gc},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(pos.x,pos.y,baseR*2.1,0,7);ctx.fill();ctx.restore();}
   // backing chip stays solid so letters keep contrast over the bright CMY faces
   ctx.beginPath();ctx.arc(pos.x,pos.y,baseR,0,7);
   ctx.fillStyle=isShared?`rgba(38,31,74,${0.72+0.28*depth})`:`rgba(20,28,50,${0.7+0.3*depth})`;ctx.fill();
   ctx.lineWidth=isShared?2:1.4;
   ctx.globalAlpha=demoted?0.55:1;
-  ctx.strokeStyle=active?"#4cc9f0":(onSel?"rgba(124,92,255,.9)":(c.kind==='core'?`rgba(255,210,140,${0.5+0.4*depth})`:(isShared?`rgba(124,92,255,${0.4+0.5*depth})`:`rgba(120,140,190,${0.22+0.4*depth})`)));
+  ctx.strokeStyle=active?"#4cc9f0":(onSel?"rgba(124,92,255,.9)":(c.kind==='ring'?`rgba(255,210,140,${0.5+0.4*depth})`:(isShared?`rgba(124,92,255,${0.4+0.5*depth})`:`rgba(120,140,190,${0.22+0.4*depth})`)));
   ctx.stroke();ctx.globalAlpha=1;
-  if(cur){ctx.globalAlpha=letterDim;ctx.fillStyle=won?"#fff":(c.kind==='core'?"#ffe08a":(isShared?"#dccfff":"#eef1fb"));
+  if(cur){ctx.globalAlpha=letterDim;ctx.fillStyle=won?"#fff":(c.kind==='ring'?"#ffe08a":(isShared?"#dccfff":"#eef1fb"));
     ctx.font="700 "+Math.round(baseR*1.05)+"px 'Segoe UI',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(cur,pos.x,pos.y+1);ctx.globalAlpha=1;}
   if(checkFlash&&cur){ctx.beginPath();ctx.arc(pos.x,pos.y,baseR,0,7);ctx.strokeStyle=correct?"#3ddc97":"#ff5d73";ctx.lineWidth=2.4;ctx.stroke();}
 }
-function sameCell(a,b){if(!a||!b||a.kind!==b.kind)return false;if(a.kind==='v')return a.v===b.v;if(a.kind==='core')return true;return a.key===b.key;}
+function sameCell(a,b){if(!a||!b||a.kind!==b.kind)return false;if(a.kind==='v')return a.v===b.v;return a.key===b.key;}
 function drawDir(w){const A=projCell(w.cells[0]),B=projCell(w.cells[w.cells.length-1]);
   const dx=B.x-A.x,dy=B.y-A.y,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,s=9;const tip={x:A.x+dx*0.82,y:A.y+dy*0.82};
   ctx.beginPath();ctx.moveTo(tip.x,tip.y);ctx.lineTo(tip.x-ux*s-uy*s*0.6,tip.y-uy*s+ux*s*0.6);ctx.lineTo(tip.x-ux*s+uy*s*0.6,tip.y-uy*s-ux*s*0.6);ctx.closePath();ctx.fillStyle="#4cc9f0";ctx.fill();
   ctx.beginPath();ctx.arc(A.x,A.y,15,0,7);ctx.strokeStyle="#4cc9f0";ctx.lineWidth=2;ctx.stroke();}
 
-/* ---------- interior: growing crystal + lattice ---------- */
-const INNER=(function(){const p=(1+Math.sqrt(5))/2;let V=[[-1,p,0],[1,p,0],[-1,-p,0],[1,-p,0],[0,-1,p],[0,1,p],[0,-1,-p],[0,1,-p],[p,0,-1],[p,0,1],[-p,0,-1],[-p,0,1]];
-  V=V.map(q=>{const n=Math.hypot(q[0],q[1],q[2]);return q.map(x=>x/n);});const d2=(a,b)=>a.reduce((s,x,i)=>s+(x-b[i])**2,0);let mn=1e9;
-  for(let i=0;i<12;i++)for(let j=i+1;j<12;j++)mn=Math.min(mn,d2(V[i],V[j]));let E=[];
-  for(let i=0;i<12;i++)for(let j=i+1;j<12;j++)if(Math.abs(d2(V[i],V[j])-mn)<1e-3)E.push([i,j]);
-  const adj=Array.from({length:12},()=>[]);E.forEach(([a,b],i)=>{adj[a].push([b,i]);adj[b].push([a,i]);});
-  const seenE=new Set(),order=[],seenV=new Set([0]),q=[0];while(q.length){const v=q.shift();for(const[w,ei]of adj[v]){if(!seenE.has(ei)){seenE.add(ei);order.push(E[ei]);}if(!seenV.has(w)){seenV.add(w);q.push(w);}}}
-  E.forEach((e,i)=>{if(!seenE.has(i))order.push(e);});return {V,E:order};})();
-function rotY(v,a){const c=Math.cos(a),s=Math.sin(a);return [v[0]*c+v[2]*s,v[1],-v[0]*s+v[2]*c];}
-function rotX(v,a){const c=Math.cos(a),s=Math.sin(a);return [v[0],v[1]*c-v[2]*s,v[1]*s+v[2]*c];}
-function drawInterior(prog){
-  const O=project([0,0,0]);const t=(typeof performance!=="undefined"?performance.now():Date.now())*0.001;
-  ctx.save();ctx.globalCompositeOperation="lighter";
-  // faint ambient wires from solved edges to the seed
-  for(const e of P.edges){if(!wordDone(P,e))continue;const M=project(mid(e));const col=e._col;
-    ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},0.12)`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(O.x,O.y);ctx.lineTo(M.x,M.y);ctx.stroke();}
-  // growing seed crystal
-  const scale=0.05+0.46*coreEnergy,spin=t*0.4;
-  const iv=INNER.V.map(v=>project(rotX(rotY([v[0]*scale,v[1]*scale,v[2]*scale],spin),spin*0.62)));
-  const revealed=Math.min(INNER.E.length,Math.round(prog*INNER.E.length));const cols=[[110,235,235],[235,110,235],[235,235,110]];
-  for(let k=0;k<revealed;k++){const e=INNER.E[k];const a=iv[e[0]],b=iv[e[1]];const col=cols[k%3];
-    ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.3+0.45*coreEnergy})`;ctx.lineWidth=1.15;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
-  if(prog>0){const sv=new Set();for(let k=0;k<revealed;k++){sv.add(INNER.E[k][0]);sv.add(INNER.E[k][1]);}for(const vi of sv){const pv=iv[vi];ctx.fillStyle=`rgba(228,232,255,${0.28+0.45*coreEnergy})`;ctx.beginPath();ctx.arc(pv.x,pv.y,1.5+1.5*coreEnergy,0,7);ctx.fill();}}
-  const R=SCALE*view.zoom*(0.018+0.05*coreEnergy)*(1+winFlash*0.28+corePulse*0.18);const gg=ctx.createRadialGradient(O.x,O.y,0,O.x,O.y,R);const al=0.16+0.5*coreEnergy+corePulse*0.22;
-  gg.addColorStop(0,`rgba(238,240,255,${al})`);gg.addColorStop(1,"rgba(150,130,255,0)");ctx.fillStyle=gg;ctx.beginPath();ctx.arc(O.x,O.y,R,0,7);ctx.fill();
+/* ---------- the center: a paper disc that takes the pigments the spokes bring ----------
+   Empty paper while the surface is being solved; tinted by each pigment as its spoke lands
+   (cyan, then blue when magenta joins, ...); ink once all three are in. Three rim arcs show which
+   pigments have arrived. The ring letters themselves are drawn as nodes. */
+function drawCore(){
+  const O=project([0,0,0]);const arr=pigmentsArrived();const all=arr[0]&&arr[1]&&arr[2];const vis=ringVisible();
+  const zf=Math.max(0.75,Math.min(1.7,view.zoom));const R=RING_R*O.s+15*zf;
+  const ink=inkColor(arr);
+  ctx.save();
+  // soft glow underneath, brighter as the dig progresses and when a spoke lands
+  ctx.globalCompositeOperation="lighter";
+  const gR=R*(1.6+0.4*coreEnergy)*(1+winFlash*0.35+corePulse*0.15);const gg=ctx.createRadialGradient(O.x,O.y,R*0.5,O.x,O.y,gR);
+  const ga=0.10+0.22*coreEnergy+corePulse*0.2+(all?0.18:0)+winFlash*0.25;
+  gg.addColorStop(0,`rgba(238,240,255,${ga})`);gg.addColorStop(1,"rgba(150,130,255,0)");ctx.fillStyle=gg;ctx.beginPath();ctx.arc(O.x,O.y,gR,0,7);ctx.fill();
+  ctx.globalCompositeOperation="source-over";
+  // the paper
+  const pa=vis?(all?0.92:0.30+0.25*coreEnergy):0.035+0.12*coreEnergy;
+  ctx.beginPath();ctx.arc(O.x,O.y,R,0,7);ctx.fillStyle=`rgba(${ink[0]},${ink[1]},${ink[2]},${pa})`;ctx.fill();
+  if(all||won){ctx.strokeStyle=`rgba(245,240,255,${0.55+0.4*winFlash})`;ctx.lineWidth=1.5;ctx.stroke();}
+  // rim arcs: one per pigment, lit when that pigment has reached the center
+  for(let p=0;p<3;p++){const a0=-Math.PI/2+p*2*Math.PI/3+0.14,a1=a0+2*Math.PI/3-0.28;const c=PIG_RGB[p];
+    ctx.beginPath();ctx.arc(O.x,O.y,R+5*zf,a0,a1);ctx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},${arr[p]?0.95:(vis?0.22:0.10)})`;ctx.lineWidth=arr[p]?3.2:1.4;ctx.stroke();}
   ctx.restore();
 }
 
 /* ---------- particles ---------- */
-function burst(w){if(w.layer==='spoke')corePulse=Math.min(1.6,corePulse+1);if(REDUCED_MOTION)return;const c=wordCentroid(w);const m=project(c);const col=w.layer==='spoke'?[255,210,140]:(w.layer==='face'?[120,235,200]:[124,92,255]);
+function burst(w){if(w.layer==='spoke'||w.layer==='core')corePulse=Math.min(1.6,corePulse+1);if(REDUCED_MOTION)return;const c=wordCentroid(w);const m=project(c);
+  const col=w.layer==='spoke'?PIG_RGB[P._pigment[w.face]]:(w.layer==='core'?[255,220,150]:(w.layer==='face'?PIG_RGB[P._pigment[w.face]]:[124,92,255]));
   for(let i=0;i<14;i++){const ang=Math.random()*7,sp=1+Math.random()*3.2;particles.push({x:m.x,y:m.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:1,col});}}
-function spokeColor(sw){if(sw.cornerV!=null&&sw.cornerV!==undefined){const cb=cornerBleed(sw.cornerV);if(cb)return cb.col;}return P._faceColor[sw.face]||[200,180,255];}
+function spokeColor(sw){return PIG_RGB[P._pigment[sw.face]];}
 function alongPath(pts,t){const n=pts.length;if(n<=1)return pts[0]||{x:0,y:0};const f=Math.max(0,Math.min(0.9999,t))*(n-1);const i=Math.floor(f);const a=pts[i],b=pts[i+1]||pts[i];const u=f-i;return {x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u};}
 function drawCorePulses(){
   const t=(typeof performance!=="undefined"?performance.now():Date.now())*0.001;
@@ -928,7 +1056,12 @@ function hit(x,y){let best=null,bd=1e9;for(const pc of projCells){const d=Math.h
   setSel(pick.w,pick.i);
 }
 function typeLetter(ch){if(won||!sel.word||!selectable(sel.word))return;setCur(P,sel.word.cells[sel.cellIdx],ch);
-  sel.cellIdx=Math.min(sel.cellIdx+1,sel.word.cells.length-1);updateClues();markStart();if(solved(P))winNow();else saveGame();}
+  sel.cellIdx=Math.min(sel.cellIdx+1,sel.word.cells.length-1);updateClues();markStart();if(solved(P)){winNow();return;}saveGame();
+  if(wordDone(P,sel.word))advanceFrom(sel.word);}
+/* a finished word hands off to the next unsolved one (the center ring first, the moment it opens) */
+function advanceFrom(w){if(coreUnlocked()&&!wordDone(P,P.ringWord)&&w!==P.ringWord){setSel(P.ringWord,firstEmpty(P.ringWord));focusWord(P.ringWord);return;}
+  const list=selectableList();const i=Math.max(0,list.indexOf(w));
+  for(let j=1;j<=list.length;j++){const n=list[(i+j)%list.length];if(!wordDone(P,n)){setSel(n,firstEmpty(n));focusWord(n);return;}}}
 function markStart(){if(!started){started=true;tick=setInterval(()=>{timer++;$("timer").textContent=fmt(timer);if(timer%15===0)saveGame();},1000);}}
 function backspace(){if(won||!sel.word)return;const w=sel.word;if(getCur(P,w.cells[sel.cellIdx]))setCur(P,w.cells[sel.cellIdx],"");else{sel.cellIdx=Math.max(0,sel.cellIdx-1);setCur(P,w.cells[sel.cellIdx],"");}updateClues();saveGame();}
 function moveCell(d){if(!sel.word)return;sel.cellIdx=Math.max(0,Math.min(sel.word.cells.length-1,sel.cellIdx+d));view.idle=0;}
@@ -942,19 +1075,23 @@ function buildClues(){const ul=$("clueList");ul.innerHTML="";
       li.addEventListener("click",()=>{if(selectable(w)){setSel(w,firstEmpty(w));focusWord(w);}});ul.appendChild(li);});};
   group("◆ Edges",P.edges);
   group("△ Faces",P.faceWords);
-  group("✶ Core",P.spokeWords);
+  group("✶ Spokes",P.spokeWords);
+  group("● Center",[P.ringWord]);
   updateClues();
 }
 /* Locked words keep their clue hidden: the inner layers are meant to be uncovered, not read ahead. */
 function clueMarkup(w){if(selectable(w))return `${w.clue} <i>(${w.len})</i>`;
-  return w.layer==='face'?`<i>opens when its three edges are solved</i>`:`<i>opens when face F${w.face+1} is solved</i>`;}
+  if(w.layer==='face')return `<i>opens when its three edges are solved</i>`;
+  if(w.layer==='spoke')return `<i>opens when face F${w.face+1} is solved · carries ${PIG_NAME[P._pigment[w.face]]}</i>`;
+  return `<i>opens when every spoke has reached the center</i>`;}
 function updateClues(){
-  P.edges.concat(P.faceWords,P.spokeWords).forEach(w=>{const li=document.querySelector(`#clueList li[data-id="${w.layer+w.num}"]`);if(!li)return;
+  allWords(P).forEach(w=>{const li=document.querySelector(`#clueList li[data-id="${w.layer+w.num}"]`);if(!li)return;
     const done=wordDone(P,w),lock=!selectable(w);li.classList.toggle("done",done);li.classList.toggle("locked",lock);
     const t=li.querySelector(".ctext");if(t){const m=clueMarkup(w);if(t.dataset.m!==m){t.dataset.m=m;t.innerHTML=m;}}});
   const sc=stageCounts();
   $("solvedCount").textContent=(sc.eS+sc.fS+sc.cS)+"/"+(sc.eT+sc.fT+sc.cT);
-  const h=$("stageLine");if(h)h.textContent=`◆ ${sc.eS}/${sc.eT}  △ ${sc.fS}/${sc.fT}  ✶ ${sc.cS}/${sc.cT}`;
+  const h=$("stageLine");if(h){const arr=pigmentsArrived();
+    h.innerHTML=`◆ ${sc.eS}/${sc.eT}  △ ${sc.fS}/${sc.fT}  ✶ ${sc.cS}/${sc.cT} `+[0,1,2].map(p=>`<span class="pig${arr[p]?" on":""}" style="color:rgb(${PIG_RGB[p].join(",")})" title="${PIG_NAME[p]}${arr[p]?" has reached the center":" not yet at the center"}"></span>`).join("");}
   const tot=sc.eT+sc.fT+sc.cT,sv=sc.eS+sc.fS+sc.cS;$("progFill").style.width=(100*sv/tot)+"%";
 }
 
@@ -986,7 +1123,7 @@ function winNow(){if(won)return;won=true;clearInterval(tick);view.auto=true;view
     const shareBtn=isD?`<button class="btn" onclick="shareDaily(this)">Share result</button>`:`<button class="btn" onclick="shareGame(this)">Share</button>`;
     const nextBtn=isD?`<button class="btn primary" onclick="nextFromWin()">Done →</button>`:`<button class="btn primary" onclick="nextFromWin()">New solid →</button>`;
     $("card").innerHTML=`<h2>You reached the center</h2>
-      <p class="s2">${SIZES[sizeName].label} · ${P.edges.length+P.faceWords.length+P.spokeWords.length} words · ${fmt(timer)}${assistNote()}</p>
+      <p class="s2">${SIZES[sizeName].label} · ${allWords(P).length} words · ${fmt(timer)}${assistNote()}</p>
       ${bestLine}${badge}
       <p class="s2">the words were all circling -</p>
       <div class="reveal">${(P.payoff||{}).word||P.coreWord||""}</div>
@@ -1076,11 +1213,11 @@ function confetti(){if(REDUCED_MOTION)return;const c=$("confetti");c.style.displ
 
 /* ---------- intent pick (pre-puzzle oracle) ---------- */
 const MOODS=[
- {label:"A question",  words:["TRUTH","DOOR","TIME"],            line:"A question, then. The center is keeping one of its own."},
- {label:"A hope",      words:["SEED","STAR","HOME","DREAM"],     line:"A hope. The shape is already leaning toward the light."},
- {label:"A heaviness", words:["OCEAN","EMBER","RIVER","TIME","ROOT"], line:"Bring it down with you. The center has carried heavier."},
- {label:"Restlessness",words:["STORM","RIVER","NEST","DOOR"],    line:"Restless. Good — so is the spinning thing."},
- {label:"Wonder",      words:["STAR","DREAM","OCEAN","SEED"],    line:"Wonder. The oldest reason to go looking."},
+ {label:"A question",  words:["TRUTH","DOOR","TIME","MOON"],            line:"A question, then. The center is keeping one of its own."},
+ {label:"A hope",      words:["SEED","STAR","HOME","DREAM","LIGHT","BREAD"],     line:"A hope. The shape is already leaning toward the light."},
+ {label:"A heaviness", words:["OCEAN","EMBER","RIVER","TIME","ROOT","RAIN"], line:"Bring it down with you. The center has carried heavier."},
+ {label:"Restlessness",words:["STORM","RIVER","NEST","DOOR","SONG","RAIN"],    line:"Restless. Good — so is the spinning thing."},
+ {label:"Wonder",      words:["STAR","DREAM","OCEAN","SEED","MOON","LIGHT"],    line:"Wonder. The oldest reason to go looking."},
  {label:"Surprise me", words:null,                                line:"As you wish. Something is already circling."}
 ];
 let MOODFILTER=null;
@@ -1091,9 +1228,14 @@ function showTutorial(reopen){hideKbd();
     '<li><b>Spin &amp; zoom.</b> Drag to rotate the solid; pinch or scroll to zoom in close.</li>'+
     '<li><b>Tap a word, then type.</b> Tap any edge or corner to pick a word and fill it — on a phone the keyboard pops up.</li>'+
     '<li><b>Corners are shared.</b> Solving one word hands its corner letters to the words around it, so the grid unlocks itself.</li>'+
-    '<li><b>Dig inward.</b> Finish the edges and the faces open with new words; those release spokes that dive toward the center.</li>'+
-    '<li><b>Reach the center</b> to uncover what all the words were quietly circling.</li>'+
+    '<li><b>Faces carry pigment.</b> Every face is cyan, magenta or yellow. Finish a face’s three edges and its word opens; solve it and the face lights up.</li>'+
+    '<li><b>Spokes carry it inward.</b> A few faces send a spoke word diving to the ring at the center. Each spoke lands one letter of the ring.</li>'+
+    '<li><b>Make ink.</b> When all three pigments reach the center they make ink, and the ring spells what every word was circling. The last letters are yours to guess.</li>'+
     '</ul>'+
+    '<div class="pigdiag"><svg width="64" height="56" viewBox="0 0 64 56" aria-hidden="true">'+
+      '<circle cx="24" cy="20" r="16" fill="rgb(0,182,242)" opacity=".85"/><circle cx="40" cy="20" r="16" fill="rgb(236,28,160)" opacity=".85"/><circle cx="32" cy="34" r="16" fill="rgb(255,214,30)" opacity=".85"/>'+
+      '<circle cx="32" cy="25" r="5.5" fill="#0b0e1a"/><circle cx="32" cy="25" r="7.5" fill="none" stroke="#fff" stroke-opacity=".7"/></svg>'+
+      '<span>Cyan, magenta and yellow are the three pigments on the solid. Together, at the center, they make the ink that writes the answer.</span></div>'+
     '<p class="tuttip">Tab or Enter = next word · Space = turn the current word to face you · tap a corner again to switch between the words that share it · ✦ Intent sets the mood.</p>'+
     (touchDevice?'<div class="tutinstall"><b>Keep it on your phone.</b> Save RUMI to your home screen so it opens full-screen and works offline, like a real app:<br><b>iPhone</b> — tap the <b>Share</b> button, then <b>Add to Home Screen</b>.<br><b>Android</b> — tap the browser menu (⋮), then <b>Install app</b> or <b>Add to Home screen</b>.</div>':'')+
     '<button class="btn primary" onclick="'+(reopen?'closeTutorial()':'startFromTutorial()')+'">'+(reopen?'Close':'Let’s go →')+'</button>';
