@@ -115,7 +115,8 @@
   #clueList li.divider{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 4px 4px;cursor:default;background:none}
   #clueList li.divider:hover{background:none}
   #clueList li.locked{opacity:.38}
-  #stageLine{font-size:11px;letter-spacing:1px;color:var(--muted);font-weight:600}
+  #stageLine,#bestLine{font-size:11px;letter-spacing:1px;color:var(--muted);font-weight:600}
+  #bestLine{color:var(--gold);text-transform:none}
   .card .poem{font-style:italic;line-height:1.65;color:#e2e6ff;font-size:14px;margin:14px 2px;text-align:left;white-space:normal}
 
   .zoomctl{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:4}
@@ -179,7 +180,7 @@
   </div>
   <div class="side">
     <div class="panelbox ctrls">
-      <h4><span>Solid</span></h4>
+      <h4><span>Solid</span><span id="bestLine" title="Your fastest clean solve of this solid"></span></h4>
       <select id="sizeSel"></select>
       <div class="btns">
         <button class="btn" id="btnCheck">Check</button>
@@ -546,6 +547,7 @@ let view={yaw:0.6,pitch:-0.5,auto:true,drag:false,lastX:0,lastY:0,moved:0,idle:0
 let sel={word:null,cellIdx:0};
 let projCells=[],focusAnim=null;
 let timer=0,tick=null,started=false,won=false;
+let assists=0,revealedAll=false;   // letters handed out by Hint / Reveal corner; Reveal-all skips records
 let mode="practice",dailyKey=null,dailySeed=null;
 let FOCUS=true;
 let particles=[],doneSet=new Set(),coreEnergy=0,winFlash=0,corePulse=0;
@@ -564,7 +566,7 @@ function buildKbd(){const host=$("kbd");if(!host||host.dataset.built)return;host
 function showKbd(){buildKbd();const h=$("kbd");if(h){h.classList.add("show");document.body.classList.add("kbdopen");}}
 function hideKbd(){const h=$("kbd");if(h){h.classList.remove("show");document.body.classList.remove("kbdopen");}}
 function newPuzzle(){
-  won=false;started=false;clearInterval(tick);timer=0;$("timer").textContent="0:00";
+  won=false;started=false;clearInterval(tick);timer=0;$("timer").textContent="0:00";assists=0;revealedAll=false;
   particles=[];doneSet=new Set();coreEnergy=0;winFlash=0;
   $("spinner").classList.add("show");
   setTimeout(()=>{
@@ -821,20 +823,23 @@ function setSel(w,idx){sel={word:w,cellIdx:idx};const e=w;$("curNum").textConten
 function onDown(x,y){view.drag=true;view.moved=0;view.lastX=x;view.lastY=y;view.auto=false;}
 function onMove(x,y){if(!view.drag)return;const dx=x-view.lastX,dy=y-view.lastY;view.moved+=Math.abs(dx)+Math.abs(dy);
   view.yaw+=dx*0.008;view.pitch+=dy*0.008;view.pitch=Math.max(-1.4,Math.min(1.4,view.pitch));view.lastX=x;view.lastY=y;view.idle=0;focusAnim=null;}
-function onUp(x,y){const click=view.moved<6;view.drag=false;view.idle=0;setTimeout(()=>view.auto=true,3500);if(click)hit(x,y);}
+function onUp(x,y){if(!view.drag)return;   // mouseup is on window: ignore releases that didn't start on the canvas
+  const click=view.moved<6;view.drag=false;view.idle=0;setTimeout(()=>view.auto=true,3500);if(click)hit(x,y);}
 function hit(x,y){let best=null,bd=1e9;for(const pc of projCells){const d=Math.hypot(pc.x-x,pc.y-y);if(d<pc.r&&d<bd){bd=d;best=pc;}}
   if(!best)return;
-  // find a selectable word containing this cell, prefer current
-  const cellEq=(a,b)=>sameCell(a,b);
-  let cand=null,ci=0;
-  if(sel.word&&selectable(sel.word)){const i=sel.word.cells.findIndex(c=>cellEq(c,best.c));if(i>=0){cand=sel.word;ci=i;}}
-  if(!cand){for(const w of selectableList()){const i=w.cells.findIndex(c=>cellEq(c,best.c));if(i>=0){cand=w;ci=i;break;}}}
-  if(cand)setSel(cand,ci);
+  // every selectable word through this cell; tapping the cell you're already on cycles to the next one (crossword convention)
+  const here=selectableList().map(w=>({w,i:w.cells.findIndex(c=>sameCell(c,best.c))})).filter(x=>x.i>=0);
+  if(!here.length)return;
+  const ci=here.findIndex(x=>x.w===sel.word);
+  let pick;
+  if(ci>=0&&here.length>1&&here[ci].i===sel.cellIdx)pick=here[(ci+1)%here.length];
+  else pick=ci>=0?here[ci]:here[0];
+  setSel(pick.w,pick.i);
 }
-function typeLetter(ch){if(!sel.word||!selectable(sel.word))return;setCur(P,sel.word.cells[sel.cellIdx],ch);
+function typeLetter(ch){if(won||!sel.word||!selectable(sel.word))return;setCur(P,sel.word.cells[sel.cellIdx],ch);
   sel.cellIdx=Math.min(sel.cellIdx+1,sel.word.cells.length-1);updateClues();markStart();if(solved(P))winNow();}
 function markStart(){if(!started){started=true;tick=setInterval(()=>{timer++;$("timer").textContent=fmt(timer);},1000);}}
-function backspace(){if(!sel.word)return;const w=sel.word;if(getCur(P,w.cells[sel.cellIdx]))setCur(P,w.cells[sel.cellIdx],"");else{sel.cellIdx=Math.max(0,sel.cellIdx-1);setCur(P,w.cells[sel.cellIdx],"");}updateClues();}
+function backspace(){if(won||!sel.word)return;const w=sel.word;if(getCur(P,w.cells[sel.cellIdx]))setCur(P,w.cells[sel.cellIdx],"");else{sel.cellIdx=Math.max(0,sel.cellIdx-1);setCur(P,w.cells[sel.cellIdx],"");}updateClues();}
 function moveCell(d){if(!sel.word)return;sel.cellIdx=Math.max(0,Math.min(sel.word.cells.length-1,sel.cellIdx+d));view.idle=0;}
 function nextWord(d){const list=selectableList();if(!list.length)return;let i=list.indexOf(sel.word);if(i<0)i=0;const n=(i+d+list.length)%list.length;const w=list[n];setSel(w,firstEmpty(w));focusWord(w);}
 
@@ -860,21 +865,34 @@ function updateClues(){
 
 /* ---------- check / hint / reveal ---------- */
 function check(){checkFlash=true;setTimeout(()=>checkFlash=false,1200);}
-function hint(){if(!sel.word||!selectable(sel.word))return;for(const c of sel.word.cells){if(getCur(P,c)!==c.letter){setCur(P,c,c.letter);break;}}updateClues();if(solved(P))winNow();}
-function revealCorner(){const v=P.vertices.find(v=>v.cur!==v.sol);if(v){v.cur=v.sol;updateClues();if(solved(P))winNow();}}
-function reveal(){if(!confirm("Reveal everything? (skips the dig)"))return;for(const w of [...P.edges,...P.faceWords,...P.spokeWords])for(const c of w.cells)setCur(P,c,c.letter);updateClues();winNow();}
+function hint(){if(won||!sel.word||!selectable(sel.word))return;markStart();
+  for(const c of sel.word.cells){if(getCur(P,c)!==c.letter){setCur(P,c,c.letter);assists++;break;}}updateClues();if(solved(P))winNow();}
+function revealCorner(){if(won)return;
+  // prefer an unsolved corner of the word you're on, then any unsolved corner
+  const onWord=sel.word?sel.word.cells.filter(c=>c.kind==='v').map(c=>P.vertices[c.v]).find(v=>v.cur!==v.sol):null;
+  const v=onWord||P.vertices.find(v=>v.cur!==v.sol);
+  if(v){markStart();v.cur=v.sol;assists++;updateClues();if(solved(P))winNow();}}
+function reveal(){if(won)return;if(!confirm("Reveal everything? (skips the dig — no time or streak is recorded)"))return;revealedAll=true;
+  for(const w of [...P.edges,...P.faceWords,...P.spokeWords])for(const c of w.cells)setCur(P,c,c.letter);updateClues();winNow();}
 
 /* ---------- win / prize ---------- */
 function winNow(){if(won)return;won=true;clearInterval(tick);view.auto=true;view.idle=999;hideKbd();
-  store.size=sizeName;store["best_"+sizeName]=Math.min(store["best_"+sizeName]||1e9,timer);
+  store.size=sizeName;
+  // records: only clean solves (no hints, no reveal) set a best time; reveal-all records nothing
+  const clean=!revealedAll&&assists===0;const prevBest=store["best_"+sizeName];const newBest=clean&&(!prevBest||timer<prevBest);
+  if(newBest)store["best_"+sizeName]=timer;
   const isD=mode==="daily";if(isD)recordDaily();persist();confetti();
   setTimeout(()=>{
-    const badge=isD?`<p class="s2" style="color:var(--cyan)">◆ Daily · ${dailyDateStr(dailyKey)}${(store.streak>1?` · 🔥 ${store.streak}-day streak`:"")}</p>`:"";
+    const st=currentStreak();
+    const badge=isD?`<p class="s2" style="color:var(--cyan)">◆ Daily · ${dailyDateStr(dailyKey)}${(!revealedAll&&st>1?` · 🔥 ${st}-day streak`:"")}</p>`:"";
+    const bestLine=revealedAll?`<p class="s2">Revealed — nothing recorded this time.</p>`
+      :(newBest?`<p class="s2" style="color:var(--gold)">★ New best for ${SIZES[sizeName].label}${prevBest?" (was "+fmt(prevBest)+")":""}</p>`
+      :(prevBest?`<p class="s2">Best ${SIZES[sizeName].label}: ${fmt(prevBest)}${assists>0?" · hinted solves don't set records":""}</p>`:""));
     const shareBtn=isD?`<button class="btn" onclick="shareDaily(this)">Share result</button>`:`<button class="btn" onclick="shareGame(this)">Share</button>`;
     const nextBtn=isD?`<button class="btn primary" onclick="nextFromWin()">Done →</button>`:`<button class="btn primary" onclick="nextFromWin()">New solid →</button>`;
     $("card").innerHTML=`<h2>You reached the center</h2>
-      <p class="s2">${SIZES[sizeName].label} · ${P.edges.length+P.faceWords.length+P.spokeWords.length} words · ${fmt(timer)}</p>
-      ${badge}
+      <p class="s2">${SIZES[sizeName].label} · ${P.edges.length+P.faceWords.length+P.spokeWords.length} words · ${fmt(timer)}${assistNote()}</p>
+      ${bestLine}${badge}
       <p class="s2">the words were all circling -</p>
       <div class="reveal">${(P.payoff||{}).word||P.coreWord||""}</div>
       <p class="kind">${(P.payoff||{}).kind||""}</p>
@@ -892,13 +910,33 @@ function tipHTML(){if(!TIP_URL||store.supported)return "";
     '<div class="row"><a class="btn" href="'+TIP_URL+'" target="_blank" rel="noopener" onclick="markSupported()">Leave a tip 💜</a>'+
     '<button class="btn" onclick="markSupported()">Hide this</button></div></div>';}
 function markSupported(){store.supported=true;persist();const b=document.querySelector(".tipbox");if(b)b.style.display="none";}
-function shareGame(btn){const word=(typeof P!=="undefined"&&P&&P.coreWord)?P.coreWord:"the center";
-  const text="I reached the center of RUMI 3D — "+word+" · "+fmt(timer);const url="https://rumi3d.org/";
-  if(navigator.share){navigator.share({title:"RUMI 3D",text:text,url:url}).catch(()=>{});}
-  else if(navigator.clipboard){navigator.clipboard.writeText(text+"  "+url).then(()=>{if(btn){const o=btn.textContent;btn.textContent="Link copied ✓";setTimeout(()=>{btn.textContent=o;},1600);}}).catch(()=>{});}}
+/* ---------- share (one path for daily + free play) ----------
+   The link travels INSIDE the text. Share targets are inconsistent about which fields they keep
+   (X/Messages take text, Facebook takes only a url, some drop text when a url is present), so a
+   single text block with the URL on its own line is the only payload that arrives intact everywhere.
+   Desktop / unsupported: copy to clipboard with visible feedback (and a legacy fallback). */
+const SITE_URL="https://rumi3d.org/";
+function assistNote(){if(revealedAll)return " · revealed";if(assists>0)return " · "+assists+(assists===1?" hint":" hints");return "";}
+function shareText(text,btn){
+  const payload=text.trim()+"\n"+SITE_URL;
+  const fallback=()=>copyText(payload,btn);
+  if(navigator.share&&(!navigator.canShare||navigator.canShare({text:payload}))){
+    let p;try{p=navigator.share({title:"RUMI 3D",text:payload});}catch(e){fallback();return;}
+    p.catch(err=>{if(!err||err.name!=="AbortError")fallback();});
+  }else fallback();
+}
+function copyText(s,btn){
+  const flash=ok=>{if(!btn)return;const o=btn.dataset.label||btn.textContent;btn.dataset.label=o;btn.textContent=ok?"Copied ✓":"Copy failed";setTimeout(()=>{btn.textContent=o;},1600);};
+  const legacy=()=>{try{const ta=document.createElement("textarea");ta.value=s;ta.setAttribute("readonly","");ta.style.cssText="position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+    document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,s.length);const ok=document.execCommand("copy");document.body.removeChild(ta);flash(ok);}catch(e){flash(false);}};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>flash(true),legacy);else legacy();
+}
+function shareGame(btn){const word=(P&&P.coreWord)?P.coreWord:"the center";
+  shareText("I reached the center of RUMI 3D — "+word+" · "+SIZES[sizeName].label+" · "+fmt(timer)+assistNote(),btn);}
 
 /* ---------- hud / controls ---------- */
-function updateHud(){$("sizePill").textContent=SIZES[sizeName].label+" · "+SIZES[sizeName].sub;updateClues();}
+function updateHud(){$("sizePill").textContent=SIZES[sizeName].label+" · "+SIZES[sizeName].sub;
+  const b=$("bestLine"),best=store["best_"+sizeName];if(b)b.textContent=best?("best "+fmt(best)):"";updateClues();}
 function buildControls(){const s=$("sizeSel");s.innerHTML="";
   Object.keys(SIZES).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=SIZES[k].label+" — "+SIZES[k].words+" edges";s.appendChild(o);});
   s.value=sizeName;s.addEventListener("change",()=>{sizeName=s.value;store.size=sizeName;persist();mode="practice";newPuzzle();});
@@ -920,12 +958,18 @@ function wireCanvas(){
   cv.addEventListener("wheel",e=>{e.preventDefault();setZoom(view.zoom*(e.deltaY<0?1.12:0.89));},{passive:false});}
 function setZoom(z){view.zoom=Math.max(0.5,Math.min(3,z));view.idle=0;}
 document.addEventListener("keydown",e=>{
-  if($("overlay").classList.contains("show")){if(e.key==="Enter")nextFromWin();return;}
-  if(document.activeElement&&document.activeElement.id==="rumiKeyIn")return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;                       // leave browser shortcuts alone
+  if($("overlay").classList.contains("show")){if(e.key==="Enter")nextFromWin();else if(e.key==="Escape")$("overlay").classList.remove("show");return;}
+  if($("tutOverlay").classList.contains("show")){if(e.key==="Escape"||e.key==="Enter"){if(store.seenTutorial)closeTutorial();else startFromTutorial();}return;}
+  if($("introOverlay").classList.contains("show")){if(e.key==="Escape"&&P)$("introOverlay").classList.remove("show");return;}
+  const ae=document.activeElement;if(ae&&(ae.tagName==="SELECT"||ae.tagName==="INPUT"||ae.tagName==="TEXTAREA"))return;
   if(/^[a-zA-Z]$/.test(e.key)){typeLetter(e.key.toUpperCase());e.preventDefault();}
   else if(e.key==="Backspace"){backspace();e.preventDefault();}
   else if(e.key==="ArrowRight"){moveCell(1);e.preventDefault();}
   else if(e.key==="ArrowLeft"){moveCell(-1);e.preventDefault();}
+  else if(e.key==="ArrowDown"||e.key==="Enter"){nextWord(1);e.preventDefault();}
+  else if(e.key==="ArrowUp"){nextWord(-1);e.preventDefault();}
+  else if(e.key==="Escape"){if(ae&&ae.blur)ae.blur();}
   else if(e.key==="Tab"){nextWord(e.shiftKey?-1:1);e.preventDefault();}
   else if(e.key==="+"||e.key==="="){setZoom(view.zoom*1.12);e.preventDefault();}
   else if(e.key==="-"||e.key==="_"){setZoom(view.zoom*0.89);e.preventDefault();}
@@ -975,17 +1019,22 @@ function dailyDateStr(k){const y=Math.floor(k/10000),m=Math.floor(k/100)%100,d=k
 function startDaily(){const t=todaySeed();mode="daily";dailyKey=t.key;dailySeed=t.seed;sizeName=t.shape;MOODFILTER=null;
   const ss=$("sizeSel");if(ss)ss.value=sizeName;store.size=sizeName;
   $("introOverlay").classList.remove("show");newPuzzle();}
-function recordDaily(){if(!dailyKey)return;store.daily=store.daily||{};const prev=store.daily[dailyKey];
-  if(!prev){const y=_dayKey(new Date(Date.now()-86400000));store.streak=(store.lastDailyKey===y?(store.streak||0)+1:1);store.lastDailyKey=dailyKey;}
-  const best=prev?Math.min(prev.time,timer):timer;store.daily[dailyKey]={time:best,shape:sizeName,reached:true};persist();}
+/* A streak only counts while it's alive: last solve was today or yesterday. */
+function currentStreak(){const s=store.streak||0;if(!s||!store.lastDailyKey)return 0;
+  const t=_dayKey(),y=_dayKey(new Date(Date.now()-86400000));return (store.lastDailyKey===t||store.lastDailyKey===y)?s:0;}
+function recordDaily(){if(!dailyKey||revealedAll)return;store.daily=store.daily||{};const prev=store.daily[dailyKey];
+  if(!prev){store.streak=currentStreak()+1;store.lastDailyKey=dailyKey;}
+  // keep the best attempt: a clean solve outranks a hinted one, otherwise the faster time wins
+  const prevClean=!!prev&&!(prev.hints>0),nowClean=assists===0;
+  const better=!prev||(nowClean&&!prevClean)||(nowClean===prevClean&&timer<prev.time);
+  if(better)store.daily[dailyKey]={time:timer,shape:sizeName,reached:true,hints:assists};persist();}
 function dailyResultText(){const k=dailyKey,d=store.daily&&store.daily[k];if(!d)return "";
-  const sh=SIZES[d.shape]?SIZES[d.shape].label:d.shape;const st=store.streak||1;
-  return "RUMI 3D · "+dailyDateStr(k)+"\n◆ "+sh+"  ·  "+fmt(d.time)+"\n🟦🟪🟨 → ✦ reached the center"+(st>1?"\n🔥 "+st+"-day streak":"")+"\nrumi3d.org";}
-function shareDaily(btn){const text=dailyResultText();
-  if(navigator.share){navigator.share({title:"RUMI 3D",text:text}).catch(()=>{});}
-  else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>{if(btn){const o=btn.textContent;btn.textContent="Copied ✓";setTimeout(()=>{btn.textContent=o;},1600);}}).catch(()=>{});}}
+  const sh=SIZES[d.shape]?SIZES[d.shape].label:d.shape;const st=currentStreak();
+  const hint=d.hints>0?("  ·  "+d.hints+(d.hints===1?" hint":" hints")):"";
+  return "RUMI 3D · "+dailyDateStr(k)+"\n◆ "+sh+"  ·  "+fmt(d.time)+hint+"\n🟦🟪🟨 → ✦ reached the center"+(st>1?"\n🔥 "+st+"-day streak":"");}
+function shareDaily(btn){const text=dailyResultText();if(text)shareText(text,btn);}
 function renderDailyBlock(){const el=$("dailyBlock");if(!el)return;const t=todaySeed();
-  const solved=store.daily&&store.daily[t.key];const sh=SIZES[t.shape]?SIZES[t.shape].label:t.shape;const st=store.streak||0;
+  const solved=store.daily&&store.daily[t.key];const sh=SIZES[t.shape]?SIZES[t.shape].label:t.shape;const st=currentStreak();
   const streakHtml=st>0?('<div class="dstreak">🔥 '+st+'-day streak</div>'):'';
   if(solved){el.innerHTML='<div class="dailycard"><div class="dhead">◆ Today’s puzzle · '+dailyDateStr(t.key)+'</div>'+
     '<div class="dsolved">✓ Solved · '+sh+' · '+fmt(solved.time)+'</div>'+
